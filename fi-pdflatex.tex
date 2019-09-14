@@ -57,7 +57,7 @@
     advisor       = Jan Horák,
     title         = {High-availability for PostgreSQL in OpenShift},
     %% TeXtitle      = {The Proof of $\mathsf{P}=\mathsf{NP}$},
-    keywords      = {PostgreSQL, OpenShift, Kubernetes, High-availability, Operator},
+    keywords      = {PostgreSQL, OpenShift, Kubernetes, High-availability, Replication, Operator SDK},
     %% TeXkeywords   = {keyword1, keyword2, \ldots},
     abstract      = {%
       This is the abstract of my thesis, which can
@@ -136,565 +136,57 @@
 \chapter*{Introduction}
 \addcontentsline{toc}{chapter}{Introduction}
 
-Theses are rumoured to be the capstones of education, so I decided
-to write one of my own. If all goes well, I will soon have a
-diploma under my belt. Wish me luck!
+We live in the computer age. People can access information and knowledge faster and easier than ever before. The evolution of information technology in the last few decades have a great impact on the society. The heavy personal computers have been replaced by tiny devices, laptops, cell phones and smart watches. The performance have been increased, internet connection is available almost everywhere and the number of easy to use applications and web pages for various purposes and have grown significantly.
 
-\begin{otherlanguage}{czech}
-Říká se, že závěrečné práce jsou vyvrcholením studia a tak jsem se
-rozhodl jednu také napsat. Pokud vše půjde podle plánu, odnesu si
-na konci semestru diplom. Držte mi palce!
-\end{otherlanguage}
+This revolution also brought a lots of new challenges and rapid changes on the other side of computer industry. All the data centers, where pieces of information are stored, computers, which runs those services, web pages and applications must have been adapted to the requirements of this age equally well.
 
-\begin{otherlanguage}{slovak}
-Hovorí sa, že záverečné práce sú vyvrcholením štúdia a tak som sa
-rozhodol jednu tiež napísať. Ak všetko pôjde podľa plánu, odnesiem
-si na konci semestra diplom. Držte mi palce!
-\end{otherlanguage}
+The main goals of web service providers are to make the service high available, capable of handling big number of requests each second and update running services smoothly. The service should survive disk corruption on some of the computers it is running on, small network issues and sometimes event natural disasters in the area, where data center is located. Ideally, the user shouldn't experience any downtime of the service, when it's being updated to newer version. Software engineers have started an effort to develop complex platforms able to face such challenges in the automated way.
 
-\begin{otherlanguage}{german}
-Man munkelt, dass die Dissertation die Krönung der Ausbildung ist.
-Deshalb habe ich mich beschlossen meine eigene zu schreiben. Wenn
-alles gut geht, bekomme ich bald ein Diplom. Wünsch mir Glück!
-\end{otherlanguage}
+Automated platforms currently work quite well for a simple applications. Additional level of complexity is added when systems storing a specific state, such as databases are managed automatically by the platform. This area is still relatively unexplored and provides a plenty of fascinating design problems to be solved. That is the main reason why I have chosen integrating of high available database setup into on of the fully automated platform as a topic for my thesis.
 
-\begin{otherlanguage}{russian}\textrussian{%
-Говорят, что тезис -- это кульминация обучения. Поэтому я и решил
-написать собственный тезис. Если всё сработает по плану, я скоро
-получу диплом. Желайте мне удачи!
-}\end{otherlanguage}
+The main goal of this thesis is to explore an existing tools and solutions for both, database high availability and the automated platforms, choose the most suitable tools to be integrated into a single system and implement the missing automation logic. The resulting system should be able to handle real world use cases of high available database autonomously. The final part of the thesis will be to check and evaluate behaviour of the system in different scenarios.
 
-\chapter{These are}
-\section{the available}
-\subsection{sectioning}
-\subsubsection{commands.}
-\paragraph{Paragraphs and}
-\subparagraph{subparagraphs are available as well.}
-Inside the text, you can also use unnumbered lists,
-\begin{itemize}
-  \item such as
-  \item this one
-  \begin{itemize}
-    \item     and they can be nested as well.
-    \item[>>] You can even turn the bullets into something fancier,
-    \item[\S] if you so desire.
-  \end{itemize}
-\end{itemize}
-Numbered lists are
-\begin{enumerate}
-  \item very
-  \begin{enumerate}
-    \item similar
-  \end{enumerate}
-\end{enumerate}
-and so are description lists:
-\begin{description}
-  \item[Description list]
-    A list of terms with a description of each term
-\end{description}
-The spacing of these lists is geared towards paragraphs of text.
-For lists of words and phrases, the \textsf{paralist} package
-offers commands
-\begin{compactitem}
-  \item that
-  \begin{compactitem}
-    \item are
-    \begin{compactitem}
-      \item better
-      \begin{compactitem}
-        \item suited
-      \end{compactitem}
-    \end{compactitem}
-  \end{compactitem}
-\end{compactitem}
-\begin{compactenum}
-  \item to
-  \begin{compactenum}
-    \item this
-    \begin{compactenum}
-      \item kind of
-      \begin{compactenum}
-        \item content.
-      \end{compactenum}
-    \end{compactenum}
-  \end{compactenum}
-\end{compactenum}
-The \textsf{amsthm} package provides the commands necessary for the
-typesetting of mathematical definitions, theorems, lemmas and
-proofs.
+TODO: Navod na citanie prace, struktura prace v kapitole XXX je popsano...
 
-%% We will define several mathematical sectioning commands.
-\newtheorem{theorem}{Theorem}[section] %% The numbering of theorems
-                               %% will be reset after each section.
-\newtheorem{lemma}[theorem]{Lemma}         %% The numbering of lemmas
-\newtheorem{corollary}[theorem]{Corollary} %% and corollaries will
-                               %% share the counter with theorems.
-\theoremstyle{definition}
-\newtheorem{definition}{Definition}
-\theoremstyle{remark}
-\newtheorem*{remark}{Remark}
+\chapter{Container orchestration}
+The new approach to design, create and deploy applications is much different from the traditional way, which includes many manual stages. The main goals are to get new services to the market faster, minimize the cost and increase scalability of the services. Automation of all the stages of service life cycle, using principles like miroservices architecture, countinuous delivery and container orchestration platforms is the key to achieve the goals. This particular approach to application life cycle combined with new tooling is usually called "Cloud Native" \cite{cloud_native}.
 
-\begin{theorem}
-  This is a theorem that offers a profound insight into the
-  mathematical sectioning commands.
-\end{theorem}
-\begin{theorem}[Another theorem]
-  This is another theorem. Unlike the first one, this theorem has
-  been endowed with a name.
-\end{theorem}
-\begin{lemma}
-  Let us suppose that $x^2+y^2=z^2$. Then
-  \begin{equation}
-    \biggl\langle u\biggm|\sum_{i=1}^nF(e_i,v)e_i\biggr\rangle
-    =F\biggl(\sum_{i=1}^n\langle e_i|u\rangle e_i,v\biggr).
-  \end{equation}
-\end{lemma}
-\begin{proof}
-  $\nabla^2 f(x,y)=\frac{\partial^2f}{\partial x^2}+
-   \frac{\partial^2f}{\partial y^2}$.
-\end{proof}
-\begin{corollary}
-  This is a corollary.
-\end{corollary}
-\begin{remark}
-  This is a remark.
-\end{remark}
+Following chapter describes concrete container orchestration tools that are the core components of Cloud Native approach.
 
-\chapter{Floats and references}
-\begin{figure}
-  \begin{center}
-    %% PNG and JPG images can be inserted into the document as well,
-    %% but their resolution needs to be adequate. The minimum is
-    %% about 100 pixels per 1 centimeter or 300 pixels per 1 inch.
-    %% That means that a JPG or PNG image typeset at 4 × 4 cm should
-    %% be 400 × 400 px large at the bare minimum.
-    %%
-    %% The optimum is about 250 pixels per 1 centimeter or 600
-    %% pixels per 1 inch. That means that a JPG or PNG image typeset
-    %% at 4 × 4 cm should be 1000 × 1000 px large or larger.
-    \includegraphics[width=4cm]{fithesis/logo/mu/fithesis-base.pdf}
-  \end{center}
-  \caption{The logo of the Masaryk University at 40\,mm}
-  \label{fig:mulogo1}
-\end{figure}
+\section{Linux containers}
+The idea of isolating a single process from the rest of Unix-like system has been around for decades. There are multiple reasons for isolating part of the system. Sandboxing non trusted application can prevent security threats. Installing application dependencies into a separate file system can help to avoid requirement version conflicts and isolated program alongside it's dependencies can be distributed to different machines with lower risk of introducing issues.
 
-\begin{figure}
-  \begin{center}
-    \begin{minipage}{.66\textwidth}
-      \includegraphics[width=\textwidth]{fithesis/logo/mu/fithesis-base.pdf}
-    \end{minipage}
-    \begin{minipage}{.33\textwidth}
-      \includegraphics[width=\textwidth]{fithesis/logo/mu/fithesis-base.pdf} \\
-      \includegraphics[width=\textwidth]{fithesis/logo/mu/fithesis-base.pdf}
-    \end{minipage}
-  \end{center}
-  \caption{The logo of the Masaryk University at $\frac23$ and
-    $\frac13$ of text width}
-  \label{fig:mulogo2}
-\end{figure}
+The concept of chroot \cite{unix_chroot} was introduced during the development of Unix Version 7 in 1979. The chroot system call serves to isolate the process by changing the root directory of the new process to the different path in the file system. The process isolated by chroot and its children can only access the directories within its own directory tree. This concept is considered to be the first implementation of light weight isolation. The chroot system call has still its use cases forty years after its original implementation.
 
-\begin{table}
-  \begin{tabularx}{\textwidth}{lllX}
-    \toprule
-    Day & Min Temp & Max Temp & Summary \\
-    \midrule
-    Monday & $13^{\circ}\mathrm{C}$ & $21^\circ\mathrm{C}$ & A
-    clear day with low wind and no adverse current advisories. \\
-    Tuesday & $11^{\circ}\mathrm{C}$ & $17^\circ\mathrm{C}$ & A
-    trough of low pressure will come from the northwest. \\
-    Wednesday & $10^{\circ}\mathrm{C}$ &
-    $21^\circ\mathrm{C}$ & Rain will spread to all parts during the
-    morning. \\
-    \bottomrule
-  \end{tabularx}
-  \caption{A weather forecast}
-  \label{tab:weather}
-\end{table}
+The concept of chroot improved in several ways served as a base for FreeBSD Jails \cite{freebsd_jails}. The separation implemented by jails is not limited to the file system access. All the system resources like users, processes and networking subsystem. The administrator can divide the system into several independent units. Each jail can have an IP address and its own configuration.
 
-The logo of the Masaryk University is shown in Figure
-\ref{fig:mulogo1} and Figure \ref{fig:mulogo2} at pages
-\pageref{fig:mulogo1} and \pageref{fig:mulogo2}. The weather
-forecast is shown in Table \ref{tab:weather} at page
-\pageref{tab:weather}. The following chapter is Chapter
-\ref{chap:matheq} and starts at page \pageref{chap:matheq}.
-Items \ref{item:star1}, \ref{item:star2}, and
-\ref{item:star3} are starred in the following list:
-\begin{compactenum}
-  \item some text
-  \item some other text
-  \item $\star$ \label{item:star1}
-  \begin{compactenum}
-    \item some text
-    \item $\star$ \label{item:star2}
-    \item some other text
-    \begin{compactenum}
-      \item some text
-      \item some other text
-      \item yet another piece of text
-      \item $\star$ \label{item:star3}
-    \end{compactenum}
-    \item yet another piece of text
-  \end{compactenum}
-  \item yet another piece of text
-\end{compactenum}
-If your reference points to a place that has not yet been typeset,
-the \verb"\ref" command will expand to \textbf{??} during the first
-run of
-\texttt{pdflatex \jobname.tex}
-and a second run is going to be needed for the references to
-resolve. With online services -- such as Overleaf -- this is
-performed automatically.
+In 2006 Google engineers launched project called Process Containers. This feature allows partitioning of resources such as CPU time, system memory, disk and network bandwith into groups and assigning tasks to these groups. The resource limits for a collection of processes can be specified this way. This feature was later renamed to Control Groups (cgroups) and merged into Linux kernel 2.6.24 \cite{cgroups}.
 
-\chapter{Mathematical equations}
-\label{chap:matheq}
-\TeX{} comes pre-packed with the ability to typeset inline
-equations, such as $\mathrm{e}^{ix}=\cos x+i\sin x$, and display
-equations, such as \[
-  \mathbf{A}^{-1} = \begin{bmatrix}
-  a & b \\ c & d \\
-  \end{bmatrix}^{-1} =
-  \frac{1}{\det(\mathbf{A})} \begin{bmatrix}
-  \,\,\,d & \!\!-b \\ -c & \,a \\
-  \end{bmatrix} =
-  \frac{1}{ad - bc} \begin{bmatrix}
-  \,\,\,d & \!\!-b \\ -c & \,a \\
-  \end{bmatrix}.
-\] \LaTeX{} defines the automatically numbered \texttt{equation}
-environment:
-\begin{equation}
-  \gamma Px = PAx = PAP^{-1}Px.
-\end{equation}
-The package \textsf{amsmath} provides several additional
-environments that can be used to typeset complex equations:
-\begin{enumerate}
-  \item An equation can be spread over multiple lines using the
-    \texttt{multline} environment:
-    \begin{multline}
-      a + b + c + d + e + f + b + c + d + e + f + b + c + d + e +
-f \\
-      + f + g + h + i + j + k + l + m + n + o + p + q
-    \end{multline}
+Another important concept in Linux process isolation are the Linux Namespaces \cite{namespaces}, which provide processes with their own view of the system resources. There are multiple namespaces managing visibility of different kinds of resources. The processes within a specific PID namespace can only see processes in the same namespace. Similar principle applies to the network, mount, user and other namespaces.
+Control Groups alongside namespaces are a fundamental aspects of an operating system level virtualization on Linux. Isolated virtual instances using a single shared Linux kernel are called containers.
 
-  \item Several aligned equations can be typeset using the
-    \texttt{align} environment:
-    \begin{align}
-              a + b &= c + d     \\
-                  u &= v + w + x \\[1ex]
-      i + j + k + l &= m
-    \end{align}
+LXC, Docker, rkt, CRI-O and many other are the implementations of Linux container runtime, based on the similar principles which have appeared since 2008. Not only container runtimes but also other kinds of tools have been developed. After the initial period, when the technology was relatively unstable and challenging, it finally become mature enough to be widely used in production.
 
-  \item The \texttt{alignat} environment is similar to
-    \texttt{align}, but it doesn't insert horizontal spaces between
-    the individual columns:
-    \begin{alignat}{2}
-      a + b + c &+ d       &   &= 0 \\
-              e &+ f + g   &   &= 5
-    \end{alignat}
+When comparing Linux containers to the concept of virtual machines, virtualization runs an entire guest operating system in a virtual machine while container share kernel of the host. The result is that containerization provides shorter build and setup times, smaller image size and real-time provisioning and scalability. In the other hand process level isolation is less secure than full isolation of the host and guests systems.
+In general Linux containers satisfies the requirements of Cloud Native approach workflows better than heavyweight virtualization methods.
 
-  \item Much like chapter, sections, tables, figures, or list
-    items, equations -- such as \eqref{eq:first} and
-    \eqref{eq:mine} -- can also be labeled and referenced:
-    \begin{alignat}{4}
-      b_{11}x_1 &+ b_{12}x_2  &  &+ b_{13}x_3  &  &             &
-        &= y_1,                   \label{eq:first} \\
-      b_{21}x_1 &+ b_{22}x_2  &  &             &  &+ b_{24}x_4  &
-        &= y_2. \tag{My equation} \label{eq:mine}
-    \end{alignat}
+\section{Kubernetes}
+\subsection{Containerized applications management}
+\subsection{OpenShift}
+\subsection{Operators}
 
-  \item The \texttt{gather} environment makes it possible to
-    typeset several equations without any alignment:
-    \begin{gather}
-      \psi = \psi\psi, \\
-      \eta = \eta\eta\eta\eta\eta\eta, \\
-      \theta = \theta.
-    \end{gather}
+\chapter{PostgreSQL database}
+\section{Object-relational database system}
+\section{Database replication}
+\subsection{Replication tools}
+\subsection{Replication scenarios}
 
-  \item Several cases can be typeset using the \texttt{cases}
-    environment:
-    \begin{equation}
-      |y| = \begin{cases}
-        \phantom-y & \text{if }z\geq0, \\
-                -y & \text{otherwise}.
-      \end{cases}
-    \end{equation}
-\end{enumerate}
-For the complete list of environments and commands, consult the
-\textsf{amsmath} package manual\footnote{
-  See \url{http://mirrors.ctan.org/macros/latex/required/amslatex/math/amsldoc.pdf}.
-  The \texttt{\textbackslash url} command is provided by the
-  package \textsf{url}.
-}.
-
-\chapter{\textnormal{We \textsf{have} \texttt{several} \textsc{fonts}
-  \textit{at} \textbf{disposal}}}
-The serified roman font is used for the main body of the text.
-\textit{Italics are typically used to denote emphasis or
-quotations.} \texttt{The teletype font is typically used for source
-code listings.} The \textbf{bold}, \textsc{small-caps} and
-\textsf{sans-serif} variants of the base roman font can be used to
-denote specific types of information.
-
-\tiny We \scriptsize can \footnotesize also \small change \normalsize
-the \large font \Large size, \LARGE although \huge it \Huge
-is \huge usually \LARGE not \Large necessary.\normalsize
-
-A wide variety of mathematical fonts is also available, such as: \[
-  \mathrm{ABC}, \mathcal{ABC}, \mathbf{ABC}, \mathsf{ABC},
-  \mathit{ABC}, \mathtt{ABC}
-\] By loading the \textsf{amsfonts} packages, several additional
-fonts will become available: \[
-  \mathfrak{ABC}, \mathbb{ABC}
-\] Many other mathematical fonts are available\footnote{
-  See \url{http://tex.stackexchange.com/a/58124/70941}.
-}.
-
-\chapter{Using lightweight markup}
-\shorthandoff{-}
-\begin{markdown*}{%
-  hybrid,
-  definitionLists,
-  footnotes,
-  inlineFootnotes,
-  hashEnumerators,
-  fencedCode,
-  citations,
-  citationNbsps,
-}
-
-If you decide that \LaTeX{} is too wordy for some parts of your
-document, there are [packages](https://www.ctan.org/pkg/markdown
-"Markdown") that allow you to use more lightweight markup next
-to it.
-
- ![logo](fithesis/logo/mu/fithesis-base.pdf "The logo of the
-  Masaryk University")
-
-This is a bullet list. Unlike numbered lists, bulleted lists
-contain an **unordered** set of bullet points. When a bullet point
-contains multiple paragraphs, the list is typeset as follows:
-
-  * The first item of a bullet list
-
-    that spans several paragraphs,
-  * the second item of a bullet list,
-  * the third item of a bullet list.
-
-When none of the bullet points contains multiple paragraphs, the
-list has a more compact form:
-
-  * The first item of a bullet list,
-  * the second item of a bullet list,
-  * the third item of a bullet list.
-
-Unlike a bulleted list, a numbered list implies chronology or
-ordering of the bullet points. When a bullet point
-contains multiple paragraphs, the list is typeset as follows:
-
-  1. The first item of an ordered list
-
-     that spans several paragraphs,
-  2. the second item of an ordered list,
-  3. the third item of an ordered list.
-  #. If you are feeling lazy,
-  #. you can use hash enumerators as well.
-
-When none of the bullet points contains multiple paragraphs, the
-list has a more compact form:
-
-  6. The first item of an ordered list,
-  7. the second item of an ordered list,
-  8. the third item of an ordered list.
-
-Definition lists are used to provide definitions of terms. When
-a definition contains multiple paragraphs, the list is typeset
-as follows:
-
-Term 1
-
-:   Definition 1
-
-*Term 2*
-
-:   Definition 2
-
-        Some code, part of Definition 2
-
-    Third paragraph of Definition 2.
-
-When none of the bullet points contains multiple paragraphs, the
-list has a more compact form:
-
-Term 1
-:   Definition 1
-*Term 2*
-:   Definition 2
-
-Block quotations are used to include an excerpt from an external
-document in way that visually clearly separates the excerpt from
-the rest of the work:
-
-> This is the first level of quoting.
->
-> > This is nested blockquote.
->
-> Back to the first level.
-
-Footnotes are used to include additional information to the
-document that are not necessary for the understanding of the main
-text. Here is a footnote reference^[Here is the footnote.] and
-another.[^longnote]
-
-[^longnote]: Here's one with multiple blocks.
-
-    Subsequent paragraphs are indented to show that they
-belong to the previous footnote.
-
-        Some code
-
-    The whole paragraph can be indented, or just the first
-    line.  In this way, multi-paragraph footnotes work like
-    multi-paragraph list items.
-
-Citations are used to provide bibliographical references to other
-documents. This is a regular citation~[@borgman03, p. 123]. This is
-an in-text citation: @borgman03\. You can also cite several authors
-at once using both regular~[see @borgman03, p. 123; @greenberg98,
-sec.  3.2; and @thanh01] and in-text citations: @borgman03 [p.123;
-@greenberg98, sec. 3.2; @thanh01].
-
-Code blocks are used to include source code listings into the
-document:
-
-    #include <stdio.h>
-    #include <unistd.h>
-    #include <sys/types.h>
-    #include <sys/wait.h>
-    // This is a comment
-    int main(int argc, char **argv)
-    {
-        while (--c > 1 && !fork());
-        sleep(c = atoi(v[c]));
-        printf("%d\n", c);
-        wait(0);
-        return 0;
-    }
-
-There is an alternative syntax for code blocks that allows you to
-specify additional information, such as the language of the source
-code. This information can be used for syntax highlighting:
-
-``` sh
-#!/bin/sh
-fac() {
-  if [ "$1" -leq 1 ]; then
-    echo 1
-  else
-    echo $(("$1" * fac $(("$1" - 1))))
-  fi
-}
-``````````````
-
-~~~~~~ Ruby
-# Here's a way to empty an array.
-joe = [ 'eggs.', 'some', 'break', 'to', 'Have' ]
-print(joe.pop, " ") while joe.size > 0
-print "\n"
-~~~~~~
-
-\end{markdown*}
-\shorthandon{-}
-
-\chapter{Inserting the bibliography}
-After linking a bibliography data\-base files to the document using
-the \verb"\"\texttt{thesis\discretionary{-}{}{}setup\{bib\discretionary{=}{=}{=}%
-\{\textit{file1},\textit{file2},\,\ldots\,\}\}} command, you can
-start citing the entries. This is just dummy text
-\parencite{borgman03} lightly sprinkled with citations
-\parencite[p.~123]{greenberg98}. Several sources can be cited at
-once: \cite{borgman03,greenberg98,thanh01}.
-\citetitle{greenberg98} was written by \citeauthor{greenberg98} in
-\citeyear{greenberg98}. We can also produce \textcite{greenberg98}%
-\ or %% Let us define a compound command:
-\def\citeauthoryear#1{(\textcite{#1},~\citeyear{#1})}%
-\citeauthoryear{greenberg98}%
-. The full bibliographic citation is:
-\emph{\fullcite{greenberg98}}. We can easily insert a bibliographic
-citation into the footnote\footfullcite{greenberg98}.
-
-The \verb"\nocite" command will not generate any
-output\nocite{muni}, but it will insert its arguments into
-the bibliography. The \verb"\nocite{*}" command will insert all the
-records in the bibliography database file into the bibliography.
-Try uncommenting the command
-%% \nocite{*}
-and watch the bibliography section come apart at the seams.
-
-When typesetting the document for the first time, citing a
-\texttt{work} will expand to [\textbf{work}] and the
-\verb"\printbibliography" command will produce no output. It is now
-necessary to generate the bibliography by running \texttt{biber
-\jobname.bcf} from the command line and then by typesetting the
-document again twice. During the first run, the bibliography
-section and the citations will be typeset, and in the second run,
-the bibliography section will appear in the table of contents.
-
-The \texttt{biber} command needs to be executed from within the
-directory, where the \LaTeX\ source file is located. In Windows,
-the command line can be opened in a directory by holding down the
-\textsf{Shift} key and by clicking the right mouse button while
-hovering the cursor over a directory.  Select the \textsf{Open
-Command Window Here} option in the context menu that opens shortly
-afterwards.
-
-With online services -- such as Overleaf -- or when using an
-automatic tool -- such as \LaTeX MK -- all commands are executed
-automatically. When you omit the \verb"\printbibliography" command,
-its location will be decided by the template.
-
-  \printbibliography[heading=bibintoc] %% Print the bibliography.
-
-\chapter{Inserting the index}
-After using the \verb"\makeindex" macro and loading the
-\texttt{makeidx} package that provides additional indexing
-commands, index entries can be created by issuing the \verb"\index"
-command. \index{dummy text|(}It is possible to create ranged index
-entries, which will encompass a span of text.\index{dummy text|)}
-To insert complex typographic material -- such as $\alpha$
-\index{alpha@$\alpha$} or \TeX{} \index{TeX@\TeX} --
-into the index, you need to specify a text string, which will
-determine how the entry will be sorted. It is also possible to
-create hierarchal entries. \index{vehicles!trucks}
-\index{vehicles!speed cars}
-
-After typesetting the document, it is necessary to generate the
-index by running
-\begin{center}%
-  \texttt{texindy -I latex -C utf8 -L }$\langle$\textit{locale}%
-  $\rangle$\texttt{ \jobname.idx}
-\end{center}
-from the command line, where $\langle$\textit{locale}$\rangle$
-corresponds to the main locale of your thesis -- such as
-\texttt{english}, and then typesetting the document again.
-
-The \texttt{texindy} command needs to be executed from within the
-directory, where the \LaTeX\ source file is located. In Windows,
-the command line can be opened in a directory by holding down the
-\textsf{Shift} key and by clicking the right mouse button while
-hovering the cursor over a directory. Select the \textsf{Open Command
-Window Here} option in the context menu that opens shortly
-afterwards.
-
-With online services -- such as Overleaf -- the commands are
-executed automatically, although the locale may be erroneously
-detected, or the \texttt{makeindex} tool (which is only able to
-sort entries that contain digits and letters of the English
-alphabet) may be used instead of \texttt{texindy}. In either case,
-the index will be ill-sorted.
-
-  \makeatletter\thesis@blocks@clear\makeatother
-  \phantomsection %% Print the index and insert it into the
-  \addcontentsline{toc}{chapter}{\indexname} %% table of contents.
-  \printindex
+\chapter{PostgreSQL Operator}
+\section{Operator design}
+\subsection{Operator API}
+\section{Cluster initialization}
+\section{Node interaction}
+\section{Testing}
 
 \appendix %% Start the appendices.
 \chapter{An appendix}
