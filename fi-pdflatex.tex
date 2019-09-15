@@ -148,33 +148,80 @@ The main goal of this thesis is to explore an existing tools and solutions for b
 
 TODO: Navod na citanie prace, struktura prace v kapitole XXX je popsano...
 
-\chapter{Container orchestration}
+\chapter{Cloud native computing}
 The new approach to design, create and deploy applications is much different from the traditional way, which includes many manual stages. The main goals are to get new services to the market faster, minimize the cost and increase scalability of the services. Automation of all the stages of service life cycle, using principles like miroservices architecture, countinuous delivery and container orchestration platforms is the key to achieve the goals. This particular approach to application life cycle combined with new tooling is usually called "Cloud Native" \cite{cloud_native}.
 
-Following chapter describes concrete container orchestration tools that are the core components of Cloud Native approach.
+The following chapter describes concrete tools that are the core components of Cloud Native approach.
 
 \section{Linux containers}
-The idea of isolating a single process from the rest of Unix-like system has been around for decades. There are multiple reasons for isolating part of the system. Sandboxing non trusted application can prevent security threats. Installing application dependencies into a separate file system can help to avoid requirement version conflicts and isolated program alongside it's dependencies can be distributed to different machines with lower risk of introducing issues.
+The idea of isolating some processes from the rest of operating system has a long history. There are many reasons for isolating part of the system. Sandboxing non trusted application can prevent security threats. Installing application dependencies into a separate file system can help to avoid requirement version conflicts and isolated program alongside its dependencies can be distributed to different machines with lower risk of introducing issues.
 
-The concept of chroot \cite{unix_chroot} was introduced during the development of Unix Version 7 in 1979. The chroot system call serves to isolate the process by changing the root directory of the new process to the different path in the file system. The process isolated by chroot and its children can only access the directories within its own directory tree. This concept is considered to be the first implementation of light weight isolation. The chroot system call has still its use cases forty years after its original implementation.
+The invention of virtual machine is connected with IBM and its effort to share usage of computer resources among groups of users in 1960s \cite{vm_history}. The virtualization concept has evolved into complex technology. The core principle is in running multiple operating systems on a single physical machine. This is usually achieved by making an abstraction of the physical hardware. Virtualization is used heavily in the data centers and also on desktop computers. However, running many operating system is not ideal for some use cases and there were multiple attempts to develop isolation on the operating system level instead, especially on Unix-like systems.
 
-The concept of chroot improved in several ways served as a base for FreeBSD Jails \cite{freebsd_jails}. The separation implemented by jails is not limited to the file system access. All the system resources like users, processes and networking subsystem. The administrator can divide the system into several independent units. Each jail can have an IP address and its own configuration.
+The concept of chroot \footnote{https://www.unix.com/man-page/v7/1/chroot} was introduced during the development of Unix Version 7 in 1979. The chroot system call serves to isolate the process by changing the root directory of the new process to the different path in the system. The process isolated by chroot and its children can only access the directories within its own directory tree. This concept is considered to be the first implementation of lightweight isolation. The chroot system call has still its use cases, forty years after its original implementation.
+
+The concept of chroot improved in several ways later served as a base for FreeBSD Jails \cite{freebsd_jails}. The separation implemented by jails is not limited to the file system access. It allows to isolate all the system resources like users, processes and networking subsystem. The administrator can divide the system into several independent units. Each jail can have an IP address and its own configuration.
 
 In 2006 Google engineers launched project called Process Containers. This feature allows partitioning of resources such as CPU time, system memory, disk and network bandwith into groups and assigning tasks to these groups. The resource limits for a collection of processes can be specified this way. This feature was later renamed to Control Groups (cgroups) and merged into Linux kernel 2.6.24 \cite{cgroups}.
 
-Another important concept in Linux process isolation are the Linux Namespaces \cite{namespaces}, which provide processes with their own view of the system resources. There are multiple namespaces managing visibility of different kinds of resources. The processes within a specific PID namespace can only see processes in the same namespace. Similar principle applies to the network, mount, user and other namespaces.
+Another important concept in Linux process isolation are the Linux Namespaces \cite{namespaces}. Namespaces provide processes with their own view of the system resources. There are seven kinds of namespaces managing visibility of different resources:
+\begin{itemize}
+  \item Mount - serves for isolation of mount points, its similar to chroot system call but provides complete isolation
+  \item Process ID - the processes within a specific PID namespace can only see processes in the same namespace, multiple nested process trees can exist on the system
+  \item User - isolates UID/GID number spaces
+  \item Network - allows to create an virtual network stack for each process
+  \item UTS - namespace allowing each process to have specific hostname and domain name
+  \item IPC - separates interprocess communication resources
+  \item Cgroup - isolates cgroup root directory
+\end{itemize}
+
 Control Groups alongside namespaces are a fundamental aspects of an operating system level virtualization on Linux. Isolated virtual instances using a single shared Linux kernel are called containers.
 
-LXC, Docker, rkt, CRI-O and many other are the implementations of Linux container runtime, based on the similar principles which have appeared since 2008. Not only container runtimes but also other kinds of tools have been developed. After the initial period, when the technology was relatively unstable and challenging, it finally become mature enough to be widely used in production.
+LXC \footnote{https://linuxcontainers.org/lxc/}, containerd \footnote{https://containerd.io}, rkt \footnote{https://coreos.com/rkt/}, CRI-O \footnote{https://cri-o.io} and many others are the implementations of Linux container runtime, based on the similar principles which have been introduced since 2008. Not only container runtimes but also other kinds of tools for building, managing and orchestrating containers have been developed. After the initial period, when the technology was relatively unstable and challenging, it finally become mature enough to be widely used in production.
 
-When comparing Linux containers to the concept of virtual machines, virtualization runs an entire guest operating system in a virtual machine while container share kernel of the host. The result is that containerization provides shorter build and setup times, smaller image size and real-time provisioning and scalability. In the other hand process level isolation is less secure than full isolation of the host and guests systems.
-In general Linux containers satisfies the requirements of Cloud Native approach workflows better than heavyweight virtualization methods.
+When comparing Linux containers to the concept of virtual machines, the traditional virtualization runs an entire guest operating system in a virtual machine while containers share kernel of the host. Figure 1.1 shows the difference in virtualization layers. Thanks to its lightweight design containerization provides shorter build and setup times, smaller image size and real-time provisioning and scalability. In the other hand, process level isolation is less secure than full isolation of the host and guests systems. It is necessary to follow the best practices when working with Linux containers in order to meet the security standards for production systems. In general Linux containers satisfies the requirements of Cloud Native approach workflows better than heavyweight virtualization methods.
+
+\begin{figure}[H]
+\caption{Comparison of virtual machines and containerization}
+%% source {https://blogs.bmc.com/wp-content/uploads/2018/07/containers-vs-virtual-machines.jpg}
+\centering
+\includegraphics[width=1\textwidth]{cnt-vs-vm}
+\end{figure}
+
+\section{Container orchestration} \label{orchestration}
+Containers as a standardized format containing everything the application needs to run is an efficient basic element for building scalable services. However this is only the first step on the long way to the complex clusters which are often necessary to solve the problem of running a large number of services at global scale. The cluster is often composed of many application instances in order to handle thousands of request each minute and survive misbehaving of failure of some of the containers. The service itself is usually divided into multiple units, communicating with each other. The application needs to be backed by some kind of data store or database and it can also use caches.
+
+The management and coordination of such cluster includes many different activities. All these containers must be scheduled and started at the right moment, sometimes they must start in a particular order. In case some of the containers fails, another container of the same kind must be scheduled to replace it. The application endpoints must be exposed to the outside world. In case the new version of application is being deployed, the old containers must be replaced in the smart way to minimize the downtime of the application. The term container orchestration in used for coordinating and sequencing the activities in the cluster.
 
 \section{Kubernetes}
-\subsection{Containerized applications management}
-\subsection{OpenShift}
+Many companies and communities started inventing container orchestration systems, the tools to manage or schedule the work of containers for applications based on microservices. Borg \cite{borg} is one of such tools developed at Google to run theirs services in containers. The new project named Kubernetes was started by Google engineers in 2014. The goal was to create an open source container orchestration, which can be adapted by anyone based on the experience gain on Borg.
+
+The quick adaption and success of Kubernetes is described with following words in the book Cloud Native DevOps with Kubernetes:
+\begin{quote}
+Kubernetes’s rise was meteoric. While other container orchestration systems existed
+before Kubernetes, they were commercial products tied to a vendor, and that was
+always a barrier to their widespread adoption. With the advent of a truly free and
+open source container orchestrator, adoption of both containers and Kubernetes grew
+at a phenomenal rate.
+By late 2017, the orchestration wars were over, and Kubernetes had won. While other
+systems are still in use, from now on companies looking to move their infrastructure
+to containers only need to target one platform: Kubernetes. \cite{k8s, p. 11}.
+\end{quote}
+
+\subsection{Deployment, pods and services}
+Kubernetes is relatively complex and uses many abstractions in order to be adaptable for many different cases. It is not enough to schedule and run the container. The containerized application can stop working properly if there is a memory error, disk corruption of some other reason. In case the container fails, it must be replaced by another one with the same image, command and configuration. The supervisor, which stores the container specification and is used for periodic checks if all the desired containers are running and responding is called the \textit{deployment}.
+
+A \textit{pod} is the second fundamental Kubernetes object. It represents a group of containers, which are scheduled together. They also usually share a storage and the IP address. In most cases there is a single container per pod. The deployments defines the desired state of pods, when the deployment is created and a pod satisfying the deployment doesn't exists, it is scheduled and created. Pod is the smallest deployable artifact in Kubernetes.
+
+Pods are often short lived and volatile. It can crash, it can be restarted or replaced by new pods containing the latest version of the container image. This is problematic, because the network connections to the pod can't rely on its IP address, which can change at any moment. Usually there are multiple replicas of the pod with the different addresses. The concept of Kubernetes \textit{service} provides a single, consistent IP address and load balances the incoming requests to a set of pods.
+
+\subsection{Volumes}
+Each pod has its own file system, but it is ephemeral. At the moment when pod is restarted all the data are lost. This storage is sufficient for the configuration, which is regenerated during the initialization of the pod, but not for data that must survive restart of the pod. Also in case there are multiple containers running in a pod, they might need to share some files. The \textit{volume} object solves both of these problems, file sharing and storing the data persistently. It is mounted to the pod and it's accessible for the processes running inside its containers. The volume is just an abstraction, a plenty of different underlying storage types are supported.
+
+\subsection{Controllers}
 \subsection{Operators}
 
+\section{OpenShift}
 \chapter{PostgreSQL database}
 \section{Object-relational database system}
 \section{Database replication}
