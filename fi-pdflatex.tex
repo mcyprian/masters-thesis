@@ -56,9 +56,7 @@
     gender        = m,
     advisor       = Jan Horák,
     title         = {High-availability for PostgreSQL in OpenShift},
-    %% TeXtitle      = {The Proof of $\mathsf{P}=\mathsf{NP}$},
     keywords      = {PostgreSQL, OpenShift, Kubernetes, High-availability, Replication, Operator SDK},
-    %% TeXkeywords   = {keyword1, keyword2, \ldots},
     abstract      = {%
       This is the abstract of my thesis, which can
 
@@ -78,12 +76,14 @@
 \usepackage{amsmath}  %% Mathematics
 \usepackage{amsthm}
 \usepackage{amsfonts}
-\usepackage{url}      %% Hyperlinks
+\usepackage[hyphens]{url} %% Hyperlinks
 \usepackage{markdown} %% Lightweight markup
 \usepackage{tabularx} %% Tables
 \usepackage{tabu}
 \usepackage{booktabs}
 \usepackage{listings} %% Source code highlighting
+\usepackage{graphicx} %% image management
+\graphicspath{ {fithesis/images/} }
 \lstset{
   basicstyle      = \ttfamily,
   identifierstyle = \color{black},
@@ -142,7 +142,7 @@ This revolution also brought a lots of new challenges and rapid changes on the o
 
 The main goals of web service providers are to make the service high available, capable of handling big number of requests each second and update running services smoothly. The service should survive disk corruption on some of the computers it is running on, small network issues and sometimes event natural disasters in the area, where data center is located. Ideally, the user shouldn't experience any downtime of the service, when it's being updated to newer version. Software engineers have started an effort to develop complex platforms able to face such challenges in the automated way.
 
-Automated platforms currently work quite well for a simple applications. Additional level of complexity is added when systems storing a specific state, such as databases are managed automatically by the platform. This area is still relatively unexplored and provides a plenty of fascinating design problems to be solved. That is the main reason why I have chosen integrating of high available database setup into on of the fully automated platform as a topic for my thesis.
+Automated platforms currently work quite well for a simple applications. Additional level of complexity is added when  systems storing a specific state, such as databases are managed automatically by the platform. This area is still relatively unexplored and provides a plenty of fascinating design problems to be solved. That is the main reason why I have chosen integrating of high available database setup into on of the fully automated platform as a topic for my thesis.
 
 The main goal of this thesis is to explore an existing tools and solutions for both, database high availability and the automated platforms, choose the most suitable tools to be integrated into a single system and implement the missing automation logic. The resulting system should be able to handle real world use cases of high available database autonomously. The final part of the thesis will be to check and evaluate behaviour of the system in different scenarios.
 
@@ -153,12 +153,12 @@ The new approach to design, create and deploy applications is much different fro
 
 The following chapter describes concrete tools that are the core components of Cloud Native approach.
 
-\section{Linux containers}
+\section{Linux containers} \label{containers}
 The idea of isolating some processes from the rest of operating system has a long history. There are many reasons for isolating part of the system. Sandboxing non trusted application can prevent security threats. Installing application dependencies into a separate file system can help to avoid requirement version conflicts and isolated program alongside its dependencies can be distributed to different machines with lower risk of introducing issues.
 
 The invention of virtual machine is connected with IBM and its effort to share usage of computer resources among groups of users in 1960s \cite{vm_history}. The virtualization concept has evolved into complex technology. The core principle is in running multiple operating systems on a single physical machine. This is usually achieved by making an abstraction of the physical hardware. Virtualization is used heavily in the data centers and also on desktop computers. However, running many operating system is not ideal for some use cases and there were multiple attempts to develop isolation on the operating system level instead, especially on Unix-like systems.
 
-The concept of chroot \footnote{https://www.unix.com/man-page/v7/1/chroot} was introduced during the development of Unix Version 7 in 1979. The chroot system call serves to isolate the process by changing the root directory of the new process to the different path in the system. The process isolated by chroot and its children can only access the directories within its own directory tree. This concept is considered to be the first implementation of lightweight isolation. The chroot system call has still its use cases, forty years after its original implementation.
+The concept of chroot \footnote{\url{https://www.unix.com/man-page/v7/1/chroot}} was introduced during the development of Unix Version 7 in 1979. The chroot system call serves to isolate the process by changing the root directory of the new process to the different path in the system. The process isolated by chroot and its children can only access the directories within its own directory tree. This concept is considered to be the first implementation of lightweight isolation. The chroot system call has still its use cases, forty years after its original implementation.
 
 The concept of chroot improved in several ways later served as a base for FreeBSD Jails \cite{freebsd_jails}. The separation implemented by jails is not limited to the file system access. It allows to isolate all the system resources like users, processes and networking subsystem. The administrator can divide the system into several independent units. Each jail can have an IP address and its own configuration.
 
@@ -175,15 +175,14 @@ Another important concept in Linux process isolation are the Linux Namespaces \c
   \item Cgroup - isolates cgroup root directory
 \end{itemize}
 
-Control Groups alongside namespaces are a fundamental aspects of an operating system level virtualization on Linux. Isolated virtual instances using a single shared Linux kernel are called containers.
+Control Groups alongside namespaces are a fundamental aspects of an operating system level virtualization on Linux. Isolated virtual instances using a single shared Linux kernel are called containers. The container image is a term used for a static file, which includes guest operating system components, system libraries and executable application itself. The name container refers to the instance of container image running as an isolated process.
 
-LXC \footnote{https://linuxcontainers.org/lxc/}, containerd \footnote{https://containerd.io}, rkt \footnote{https://coreos.com/rkt/}, CRI-O \footnote{https://cri-o.io} and many others are the implementations of Linux container runtime, based on the similar principles which have been introduced since 2008. Not only container runtimes but also other kinds of tools for building, managing and orchestrating containers have been developed. After the initial period, when the technology was relatively unstable and challenging, it finally become mature enough to be widely used in production.
+LXC \footnote{\url{https://linuxcontainers.org/lxc}}, containerd \footnote{\url{https://containerd.io}}, rkt \footnote{\url{https://coreos.com/rkt}}, CRI-O \footnote{\url{https://cri-o.io}} and many others are the implementations of Linux container runtime, based on similar principles which have been introduced since 2008. Not only container runtimes but also other kinds of tools for building, managing and orchestrating containers have been developed since the initial rise of containers. After the initial period, when the technology was relatively unstable and challenging, it finally become mature enough to be widely used in production.
 
 When comparing Linux containers to the concept of virtual machines, the traditional virtualization runs an entire guest operating system in a virtual machine while containers share kernel of the host. Figure 1.1 shows the difference in virtualization layers. Thanks to its lightweight design containerization provides shorter build and setup times, smaller image size and real-time provisioning and scalability. In the other hand, process level isolation is less secure than full isolation of the host and guests systems. It is necessary to follow the best practices when working with Linux containers in order to meet the security standards for production systems. In general Linux containers satisfies the requirements of Cloud Native approach workflows better than heavyweight virtualization methods.
 
 \begin{figure}[H]
-\caption{Comparison of virtual machines and containerization}
-%% source {https://blogs.bmc.com/wp-content/uploads/2018/07/containers-vs-virtual-machines.jpg}
+\caption{Comparison of virtual machines and containers}
 \centering
 \includegraphics[width=1\textwidth]{cnt-vs-vm}
 \end{figure}
@@ -208,20 +207,49 @@ systems are still in use, from now on companies looking to move their infrastruc
 to containers only need to target one platform: Kubernetes. \cite{k8s, p. 11}.
 \end{quote}
 
-\subsection{Deployment, pods and services}
-Kubernetes is relatively complex and uses many abstractions in order to be adaptable for many different cases. It is not enough to schedule and run the container. The containerized application can stop working properly if there is a memory error, disk corruption of some other reason. In case the container fails, it must be replaced by another one with the same image, command and configuration. The supervisor, which stores the container specification and is used for periodic checks if all the desired containers are running and responding is called the \textit{deployment}.
+Following subsections describe the fundamental principles of Kubernetes. This container management system designed to solve different problems, using plenty of highly customizable objects and it's still evolving quite quickly. It's not possible to fully explain the complex structure of Kubernetes in the scope of one section, so it covers only the most basic principles necessary to understand the topic. The base objects described in this section are visualized on Figure 1.2.
 
+\begin{figure}[H]
+\caption{Visualization of basic Kubernetes objects}
+\centering
+\includegraphics[width=1\textwidth]{k8s-objects}
+\end{figure}
+
+\subsection{Deployment}
+Kubernetes uses many abstractions in order to be adaptable for many different cases. It is not enough to schedule and run the container. The containerized application can stop working properly if there is a memory error, disk corruption of some other reason. In case the container fails, it must be replaced by another one with the same image, command and configuration. The supervisor, which stores the container specification and is used for periodic checks if all the desired containers are running and responding is called the \textit{deployment}.
+
+\subsection{Pod} \label{pod}
 A \textit{pod} is the second fundamental Kubernetes object. It represents a group of containers, which are scheduled together. They also usually share a storage and the IP address. In most cases there is a single container per pod. The deployments defines the desired state of pods, when the deployment is created and a pod satisfying the deployment doesn't exists, it is scheduled and created. Pod is the smallest deployable artifact in Kubernetes.
 
-Pods are often short lived and volatile. It can crash, it can be restarted or replaced by new pods containing the latest version of the container image. This is problematic, because the network connections to the pod can't rely on its IP address, which can change at any moment. Usually there are multiple replicas of the pod with the different addresses. The concept of Kubernetes \textit{service} provides a single, consistent IP address and load balances the incoming requests to a set of pods.
+\subsection{Node}
+Pods encapsulate containers, which are scheduled and run. The host operating system, with container runtime installed is needed for running containers as explained in section \ref{containers}. This is the role of \textit{nodes}. A node can be virtual or physical machine containing services necessary to run pods. Distributing pods over multiple nodes is one of the main pillars of high availability in Kubernetes. 
 
-\subsection{Volumes}
-Each pod has its own file system, but it is ephemeral. At the moment when pod is restarted all the data are lost. This storage is sufficient for the configuration, which is regenerated during the initialization of the pod, but not for data that must survive restart of the pod. Also in case there are multiple containers running in a pod, they might need to share some files. The \textit{volume} object solves both of these problems, file sharing and storing the data persistently. It is mounted to the pod and it's accessible for the processes running inside its containers. The volume is just an abstraction, a plenty of different underlying storage types are supported.
+If there are not special constraints configured, the Kubernetes scheduler \footnote{https://kubernetes.io/docs/concepts/scheduling/kube-scheduler} assigns new pod to one of the nodes, based on multiple criteria. The scheduler logic takes into account if candidate node has sufficient resources to run a pod and tries to find node with the highest score based on its local container image cache, resource balance and many other factors.
 
-\subsection{Controllers}
+\subsection{Service}
+Pods are often short lived and volatile. A pod can crash, it can be restarted or replaced by new pods containing the latest version of the container image or it can be removed by the pod autoscaler \footnote{https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/} at some point. This is problematic, because the network connections to the pod can't rely on its IP address, which can change at any moment. Usually there are multiple replicas of the pod with the different addresses. The concept of Kubernetes \textit{service} provides a single, consistent IP address and load balances the incoming requests to a set of pods.
+
+\subsection{Persistent volumes}
+Each pod has its own file system, but it is ephemeral. At the moment when pod is restarted all the data are lost. This storage is sufficient for the configuration, which is regenerated during the initialization of the pod, but not for data that must survive restart of the pod. Also in case there are multiple containers running in a pod, they might need to share some files. The \textit{PersistentVolume} (PV) object solves both of these problems, file sharing and storing the data persistently. It is mounted to the pod and it's accessible for the processes running inside its containers. The PV is just an abstraction, a plenty of different underlying storage types are supported. A PersistentVolumeClaim (PVC) is a request for storage, that can be consumed by its user. The PVC defines size of the storage and access mode.
+
 \subsection{Operators}
+The main goal of Kubernetes design is automation. The fundamental  Kubernetes objects, such as deployments are periodically checking number of existing replicas, theirs health, status and resource usage. In case some issues are detected in the cluster various operation actions are executed. This mechanism can handle common misbehaving like random process failures or overloading of replicas in fully automated way.
+
+If the Kubernetes setup for stateless web application is done properly, the basic objects are usually enough to create robust and stable service, which can work with minimal number of human operational actions.
+
+The world of stateful applications brings much more challenges. Working with a database cluster often requires manual operations on top of the standard workloads in Kubernetes. In case there are some repetitive patterns in these operation actions, it means it can be at least partially automated.
+
+Operators \footnote{\url{https://kubernetes.io/docs/concepts/extend-kubernetes/operator}} are the Kubernetes extensions, which serve to include operational domain knowledge into management of complex application. The operators concept was introduced by CoreOS \cite{operators} in 2016. The main idea of operators is to extend Kubernetes API without modifying code of the container orchestration system itself and create a new kind of object. This object has the API similar to basic Kubernetes objects, like pods \ref{pod}, but implements a higher level of abstraction. An operator can provide a database cluster, encapsulating the logic of deployment and management by combining many fundamental Kubernetes objects. The operator is typically checking the state of the cluster periodically in a loop and can react to specific events in the cluster by modifying underlying objects.
+
+Two years after introduction of operators, The Operator Framework \footnote{https://github.com/operator-framework/} was released. This framework provides an SDK, which allows to build operators without deep knowledge of low level Kubernetes API, and a couple of other tools supporting development of operators.
+
+The common examples of Kubernetes operators are implementations of cluster logging and monitoring or management of a database clusters of different types.
 
 \section{OpenShift}
+OpenShift \footnote{\url{https://www.redhat.com/en/technologies/cloud-computing/openshift}} is a Kubernetes container platform product having a paid support. Openshift uses Kubernetes as a base and builds additional layers of policies, container image streams and supporting software components on top of it. OpenShift brings stricter security policies, integrated CI/CD and web console for cluster management. From version OpenShift 4 there is also an integrated OperatorHub \footnote{\url{https://operatorhub.io}}, storing many community operators. These operators become the preferred way to deploy services on OpenShift and Kubernetes.
+
+Using OpenShift instead of pure open-source Kubernetes project components brings also some limitations. Kubernetes support many linux distribution, while Openshift can be easily installed only on Red Hat linux distributions like Red Hat Enterprise Linux (RHEL) \footnote{\url{https://www.redhat.com/en/technologies/linux-platforms/enterprise-linux}}, CentOS \footnote{\url{https://www.centos.org}} and a couple more Red Hat alternatives.
+
 \chapter{PostgreSQL database}
 \section{Object-relational database system}
 \section{Database replication}
