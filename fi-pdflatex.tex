@@ -54,18 +54,16 @@
     type          = mgr,
     author        = Michal Cyprian,
     gender        = m,
-    advisor       = Jan Horák,
+    advisor       = doc. RNDr. Vlastislav Dohnal Ph.D.,
     title         = {High-availability for PostgreSQL in OpenShift},
-    keywords      = {PostgreSQL, OpenShift, Kubernetes, High-availability, Replication, Operator SDK},
+    keywords      = {PostgreSQL, OpenShift, Kubernetes, High-availability, Relational Databases, Data Replication, Operator Framework},
     abstract      = {%
       This is the abstract of my thesis, which can
-
+https://www.overleaf.com/project/5cf67db3bef5951db84786cf
       span multiple paragraphs.
     },
     thanks        = {%
-      These are the acknowledgements for my thesis, which can
-
-      span multiple paragraphs.
+      Firstly, I would like to thank my thesis advisor doc. RNDr. Vlastislav Dohnal, Ph.D. for his support, patience and many pieces of valuable advice. I am also grateful to the people working on the OpenShift components, especially Jan Horák, who shared his technical knowledge and experience with me and was always willing to discuss my ideas and problems, that appeared during my research and design for this thesis.
     },
     bib           = example.bib,
 }
@@ -133,7 +131,7 @@
 \fi
 \makeatother
 \begin{document}
-\chapter*{Introduction}
+\chapter{Introduction}
 \addcontentsline{toc}{chapter}{Introduction}
 
 We live in the computer age. People can access information and knowledge faster and easier than ever before. The evolution of information technology in the last few decades have a great impact on the society. The heavy personal computers have been replaced by tiny devices, laptops, cell phones and smart watches. The performance have been increased, internet connection is available almost everywhere and the number of easy to use applications and web pages for various purposes and have grown significantly.
@@ -153,7 +151,7 @@ The new approach to design, create and deploy applications is much different fro
 
 The following chapter describes concrete tools that are the core components of Cloud Native approach.
 
-\section{Linux containers} \label{containers}
+\section{Linux containers} \label{sec:containers}
 The idea of isolating some processes from the rest of operating system has a long history. There are many reasons for isolating part of the system. Sandboxing non trusted application can prevent security threats. Installing application dependencies into a separate file system can help to avoid requirement version conflicts and isolated program alongside its dependencies can be distributed to different machines with lower risk of introducing issues.
 
 The invention of virtual machine is connected with IBM and its effort to share usage of computer resources among groups of users in 1960s \cite{vm_history}. The virtualization concept has evolved into complex technology. The core principle is in running multiple operating systems on a single physical machine. This is usually achieved by making an abstraction of the physical hardware. Virtualization is used heavily in the data centers and also on desktop computers. However, running many operating system is not ideal for some use cases and there were multiple attempts to develop isolation on the operating system level instead, especially on Unix-like systems.
@@ -175,25 +173,26 @@ Another important concept in Linux process isolation are the Linux Namespaces \c
   \item Cgroup - isolates cgroup root directory
 \end{itemize}
 
-Control Groups alongside namespaces are a fundamental aspects of an operating system level virtualization on Linux. Isolated virtual instances using a single shared Linux kernel are called containers. The container image is a term used for a static file, which includes guest operating system components, system libraries and executable application itself. The name container refers to the instance of container image running as an isolated process.
+Control Groups alongside namespaces are a fundamental aspects of an operating system level virtualization on Linux. Isolated virtual instances using a single shared Linux kernel are called containers. The container image is a term used for a static file, which includes guest operating system components, system libraries and executable application itself. The name container refers to an instance of container image running as an isolated process.
 
 LXC \footnote{\url{https://linuxcontainers.org/lxc}}, containerd \footnote{\url{https://containerd.io}}, rkt \footnote{\url{https://coreos.com/rkt}}, CRI-O \footnote{\url{https://cri-o.io}} and many others are the implementations of Linux container runtime, based on similar principles which have been introduced since 2008. Not only container runtimes but also other kinds of tools for building, managing and orchestrating containers have been developed since the initial rise of containers. After the initial period, when the technology was relatively unstable and challenging, it finally become mature enough to be widely used in production.
 
-When comparing Linux containers to the concept of virtual machines, the traditional virtualization runs an entire guest operating system in a virtual machine while containers share kernel of the host. Figure 1.1 shows the difference in virtualization layers. Thanks to its lightweight design containerization provides shorter build and setup times, smaller image size and real-time provisioning and scalability. In the other hand, process level isolation is less secure than full isolation of the host and guests systems. It is necessary to follow the best practices when working with Linux containers in order to meet the security standards for production systems. In general Linux containers satisfies the requirements of Cloud Native approach workflows better than heavyweight virtualization methods.
+When comparing Linux containers to the concept of virtual machines, the traditional virtualization runs an entire guest operating system in a virtual machine while containers share kernel of the host. Figure \ref{fig:cnt-vs-vm} shows the difference in virtualization layers between Virtual Machine type 1 hypervisor \footnote{\url{https://www.ibm.com/cloud/learn/hypervisors}} and Linux containers. Thanks to its lightweight design, containerization provides shorter build and setup times, smaller image size and real-time provisioning and scalability. In the other hand, process level isolation is less secure than full isolation of the guests systems. It is necessary to follow the best practices when working with Linux containers in order to meet the security standards for production systems. In general Linux containers satisfies the requirements of Cloud Native approach workflows better than heavyweight virtualization methods.
 
 \begin{figure}[H]
 \caption{Comparison of virtual machines and containers}
 \centering
 \includegraphics[width=1\textwidth]{cnt-vs-vm}
+\label{fig:cnt-vs-vm}
 \end{figure}
 
-\section{Container orchestration} \label{orchestration}
+\section{Container orchestration} \label{sec:orchestration}
 Containers as a standardized format containing everything the application needs to run is an efficient basic element for building scalable services. However this is only the first step on the long way to the complex clusters which are often necessary to solve the problem of running a large number of services at global scale. The cluster is often composed of many application instances in order to handle thousands of request each minute and survive misbehaving of failure of some of the containers. The service itself is usually divided into multiple units, communicating with each other. The application needs to be backed by some kind of data store or database and it can also use caches.
 
 The management and coordination of such cluster includes many different activities. All these containers must be scheduled and started at the right moment, sometimes they must start in a particular order. In case some of the containers fails, another container of the same kind must be scheduled to replace it. The application endpoints must be exposed to the outside world. In case the new version of application is being deployed, the old containers must be replaced in the smart way to minimize the downtime of the application. The term container orchestration in used for coordinating and sequencing the activities in the cluster.
 
-\section{Kubernetes}
-Many companies and communities started inventing container orchestration systems, the tools to manage or schedule the work of containers for applications based on microservices. Borg \cite{borg} is one of such tools developed at Google to run theirs services in containers. The new project named Kubernetes was started by Google engineers in 2014. The goal was to create an open source container orchestration, which can be adapted by anyone based on the experience gain on Borg.
+\section{Kubernetes} \label{sec:k8s}
+Many companies started inventing container orchestration systems, the platforms to schedule, manage and run containers \ref{sec:containers}. Need for similar platforms is connected with the rise of microservice \footnote{\url{https://microservices.io}} architecture of the applications. Borg \cite{borg} is one of such systems developed at Google to run theirs services in containers. The new project named Kubernetes was started by Google engineers in 2014. The goal was to create an open source container orchestration, which can be adapted by anyone based on the experience gained on Borg.
 
 The quick adaption and success of Kubernetes is described with following words in the book Cloud Native DevOps with Kubernetes:
 \begin{quote}
@@ -207,60 +206,190 @@ systems are still in use, from now on companies looking to move their infrastruc
 to containers only need to target one platform: Kubernetes. \cite{k8s, p. 11}.
 \end{quote}
 
-Following subsections describe the fundamental principles of Kubernetes. This container management system designed to solve different problems, using plenty of highly customizable objects and it's still evolving quite quickly. It's not possible to fully explain the complex structure of Kubernetes in the scope of one section, so it covers only the most basic principles necessary to understand the topic. The base objects described in this section are visualized on Figure 1.2.
+The key benefits of Kubernetes \cite{k8s_features} besides automation of operational workflows are the high availability, load balancing, auto scaling, self monitoring and self healing. The high availability is achieved thanks to distributing the important parts of the system over multiple nodes \ref{sec:node}, which can run in different geographical locations. Load balancing together with auto scaling, prevents overloading of services running in Kubernetes. Incoming requests are distributed across a set of objects and in case the set is not big enough according to some monitored metrics, more objects are added automatically. Many objects running in the Kubernetes cluster are monitored and replaced or restarted in case some failures are detected, which makes the platform self healing.
+
+Following subsections describe the fundamental principles of Kubernetes. This container management system is designed to solve different problems, using plenty of highly customizable objects and it's still evolving quite quickly. It's not possible to fully explain the complex structure of Kubernetes in the scope of one section, but it covers the most basic principles necessary to understand the motivation and design. The base objects described in this section are visualized on Figure \ref{fig:k8s-objects}.
 
 \begin{figure}[H]
 \caption{Visualization of basic Kubernetes objects}
 \centering
 \includegraphics[width=1\textwidth]{k8s-objects}
+\label{fig:k8s-objects}
 \end{figure}
 
-\subsection{Deployment}
+\subsection{Deployment} \label{sec:deployment}
 Kubernetes uses many abstractions in order to be adaptable for many different cases. It is not enough to schedule and run the container. The containerized application can stop working properly if there is a memory error, disk corruption of some other reason. In case the container fails, it must be replaced by another one with the same image, command and configuration. The supervisor, which stores the container specification and is used for periodic checks if all the desired containers are running and responding is called the \textit{deployment}.
 
-\subsection{Pod} \label{pod}
+\subsection{Pod} \label{sec:pod}
 A \textit{pod} is the second fundamental Kubernetes object. It represents a group of containers, which are scheduled together. They also usually share a storage and the IP address. In most cases there is a single container per pod. The deployments defines the desired state of pods, when the deployment is created and a pod satisfying the deployment doesn't exists, it is scheduled and created. Pod is the smallest deployable artifact in Kubernetes.
 
-\subsection{Node}
-Pods encapsulate containers, which are scheduled and run. The host operating system, with container runtime installed is needed for running containers as explained in section \ref{containers}. This is the role of \textit{nodes}. A node can be virtual or physical machine containing services necessary to run pods. Distributing pods over multiple nodes is one of the main pillars of high availability in Kubernetes. 
+\subsection{Node} \label{sec:node}
+Pods encapsulate containers, which are scheduled and run. The host operating system, with container runtime installed is needed for running containers as explained in section \ref{sec:containers}. This is the role of \textit{nodes}. A node can be virtual or physical machine containing services necessary to run pods. Distributing pods over multiple nodes is one of the main pillars of high availability in Kubernetes.
 
-If there are not special constraints configured, the Kubernetes scheduler \footnote{https://kubernetes.io/docs/concepts/scheduling/kube-scheduler} assigns new pod to one of the nodes, based on multiple criteria. The scheduler logic takes into account if candidate node has sufficient resources to run a pod and tries to find node with the highest score based on its local container image cache, resource balance and many other factors.
+If there are not special constraints configured, the Kubernetes scheduler \footnote{\url{https://kubernetes.io/docs/concepts/scheduling/kube-scheduler}} assigns new pod to one of the nodes, based on multiple criteria. The scheduler logic takes into account if candidate node has sufficient resources to run a pod and tries to find node with the highest score based on its local container image cache, resource balance and many other factors.
 
-\subsection{Service}
-Pods are often short lived and volatile. A pod can crash, it can be restarted or replaced by new pods containing the latest version of the container image or it can be removed by the pod autoscaler \footnote{https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/} at some point. This is problematic, because the network connections to the pod can't rely on its IP address, which can change at any moment. Usually there are multiple replicas of the pod with the different addresses. The concept of Kubernetes \textit{service} provides a single, consistent IP address and load balances the incoming requests to a set of pods.
+\subsection{Service} \label{sec:service}
+Pods are often short lived and volatile. A pod can crash, it can be restarted or replaced by new pods containing the latest version of the container image or it can be removed by the pod autoscaler \footnote{\url{https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/}} at some point. This is problematic, because the network connections to the pod can't rely on its IP address, which can change at any moment. Usually there are multiple replicas of the pod with the different addresses. The concept of Kubernetes \textit{service} provides a \
+single, consistent IP address and load balances the incoming requests to a set of pods.
 
-\subsection{Persistent volumes}
+\subsection{Persistent volumes} \label{sec:persistent-volume}
 Each pod has its own file system, but it is ephemeral. At the moment when pod is restarted all the data are lost. This storage is sufficient for the configuration, which is regenerated during the initialization of the pod, but not for data that must survive restart of the pod. Also in case there are multiple containers running in a pod, they might need to share some files. The \textit{PersistentVolume} (PV) object solves both of these problems, file sharing and storing the data persistently. It is mounted to the pod and it's accessible for the processes running inside its containers. The PV is just an abstraction, a plenty of different underlying storage types are supported. A PersistentVolumeClaim (PVC) is a request for storage, that can be consumed by its user. The PVC defines size of the storage and access mode.
 
-\subsection{Operators}
-The main goal of Kubernetes design is automation. The fundamental  Kubernetes objects, such as deployments are periodically checking number of existing replicas, theirs health, status and resource usage. In case some issues are detected in the cluster various operation actions are executed. This mechanism can handle common misbehaving like random process failures or overloading of replicas in fully automated way.
+\subsection{Manifests} \label{sec:manifest}
+Objects, like pods \ref{sec:pod}, deployments \ref{sec:deployment} and services \ref{sec:service} are usually defined, configured and managed by the administrator directly of by scripts, they prepared. The most frequent way of Kubernetes objects definition is to write an description of the object into file following YAML \footnote{\url{https://yaml.org}} standard. Descriptions of Kubernetes objects are called manifests. Kubernetes manifests can be send to the Kubernetes API server \footnote{\url{https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/}} using \textit{kubectl} \footnote{\url{https://kubernetes.io/docs/reference/kubectl/overview/}} command line tool and are used to create, modify and delete objects in the cluster.
 
-If the Kubernetes setup for stateless web application is done properly, the basic objects are usually enough to create robust and stable service, which can work with minimal number of human operational actions.
-
-The world of stateful applications brings much more challenges. Working with a database cluster often requires manual operations on top of the standard workloads in Kubernetes. In case there are some repetitive patterns in these operation actions, it means it can be at least partially automated.
-
-Operators \footnote{\url{https://kubernetes.io/docs/concepts/extend-kubernetes/operator}} are the Kubernetes extensions, which serve to include operational domain knowledge into management of complex application. The operators concept was introduced by CoreOS \cite{operators} in 2016. The main idea of operators is to extend Kubernetes API without modifying code of the container orchestration system itself and create a new kind of object. This object has the API similar to basic Kubernetes objects, like pods \ref{pod}, but implements a higher level of abstraction. An operator can provide a database cluster, encapsulating the logic of deployment and management by combining many fundamental Kubernetes objects. The operator is typically checking the state of the cluster periodically in a loop and can react to specific events in the cluster by modifying underlying objects.
-
-Two years after introduction of operators, The Operator Framework \footnote{https://github.com/operator-framework/} was released. This framework provides an SDK, which allows to build operators without deep knowledge of low level Kubernetes API, and a couple of other tools supporting development of operators.
-
-The common examples of Kubernetes operators are implementations of cluster logging and monitoring or management of a database clusters of different types.
+Following example shows a manifest containing definition of a simple Deployment object in YAML format:
+\begin{lstlisting}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  labels:
+    name: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      name: nginx
+  template:
+    metadata:
+      labels:
+        name: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.7.9
+        ports:
+        - containerPort: 80
+\end{lstlisting}
+This manifest defines deployment of three desired replicas of Nginx \footnote{\url{https://www.nginx.com}} container, which expose port 80. Deployment itself and specified replicas have a labels \footnote{\url{https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/}}, which serve for better organization of the objects in the cluster and divide objects into smaller subsets.
 
 \section{OpenShift}
 OpenShift \footnote{\url{https://www.redhat.com/en/technologies/cloud-computing/openshift}} is a Kubernetes container platform product having a paid support. Openshift uses Kubernetes as a base and builds additional layers of policies, container image streams and supporting software components on top of it. OpenShift brings stricter security policies, integrated CI/CD and web console for cluster management. From version OpenShift 4 there is also an integrated OperatorHub \footnote{\url{https://operatorhub.io}}, storing many community operators. These operators become the preferred way to deploy services on OpenShift and Kubernetes.
 
-Using OpenShift instead of pure open-source Kubernetes project components brings also some limitations. Kubernetes support many linux distribution, while Openshift can be easily installed only on Red Hat linux distributions like Red Hat Enterprise Linux (RHEL) \footnote{\url{https://www.redhat.com/en/technologies/linux-platforms/enterprise-linux}}, CentOS \footnote{\url{https://www.centos.org}} and a couple more Red Hat alternatives.
+Using OpenShift instead of pure open source Kubernetes project components brings also some limitations. Kubernetes support many linux distribution, while Openshift can be easily installed only on Red Hat linux distributions like Red Hat Enterprise Linux (RHEL) \footnote{\url{https://www.redhat.com/en/technologies/linux-platforms/enterprise-linux}}, CentOS \footnote{\url{https://www.centos.org}} and a couple more Red Hat alternatives.
 
-\chapter{PostgreSQL database}
-\section{Object-relational database system}
-\section{Database replication}
-\subsection{Replication tools}
-\subsection{Replication scenarios}
+\section{Operators}
+The main goal of Kubernetes design is automation. The fundamental Kubernetes objects, such as deployments are periodically checking number of existing replicas, theirs health, status and resource usage. In case some issues are detected in the cluster various operation actions are executed. This mechanism can handle common misbehaving like random process failures or overloading of replicas in the automated way.
+
+If the Kubernetes setup for stateless web application is done properly, the basic objects are usually enough to create robust and stable service, which can work with minimal number of human operational actions. The world of stateful applications brings much more challenges. Working with a database cluster often requires manual operations on top of the standard workloads in Kubernetes.
+
+\subsection{Kubernetes API extensions}
+The concept of operators was introduced by CoreOS \cite{operators} in 2016 aiming to solve the problem of hard integration of stateless applications into Kubernetes. Operators \footnote{\url{https://kubernetes.io/docs/concepts/extend-kubernetes/operator}} are the Kubernetes extensions, which serve to include operational domain knowledge into management of complex application. The main idea of operators is to extend Kubernetes API without modifying code of the container orchestration system itself and create a new kind of object. This object has the API similar to basic Kubernetes objects, like pods \ref{sec:pod}, but implements a higher level of abstraction.
+
+In case there are some repetitive patterns in the manual operational actions, it means the workflow can be at least partially automated using operator. An operator can for example provide a database cluster, encapsulating the logic of deployment and management by combining many fundamental Kubernetes objects. The operator is periodically checking the state of the cluster in a loop and can react to specific events in the cluster by modifying underlying objects. The common examples of Kubernetes operators are implementations of cluster logging and monitoring or management of a database clusters of different types.
+
+\subsection{Operator Framework}
+Two years after introduction of operators, The Operator Framework \footnote{\url{https://github.com/operator-framework/}} was released. This framework provides an SDK, which allows to build operators without deep knowledge of low level Kubernetes API, and a couple of other tools supporting development of operators. The Operator SDK \footnote{\url{https://github.com/operator-framework/operator-sdk}} serves for faster setup of operator project, generates the boilerplate code and provides the libraries for operator API definition, implementation of control loop and a operator testing framework.
+
+The API is extended by creating a Custom Resource (CR) \footnote{\url{https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/}}, supported by Kubernetes. A new CR is defined by operator author and it exposed an API in form of the custom manifest \ref{sec:manifest}. This manifest can be used by the administrator to create a CR in the cluster, modify its configuration the same way deployments \ref{sec:deployment} are managed after operator is deployed to the cluster. Currently applied manifests is compared to the state of objects in the cluster periodically and operator performs implemented operations based on configuration of the CR. The operator itself is a pod \ref{sec:pod} running in a cluster, holding the logic implemented to manage CR, monitoring other objects in the cluster and performing programmed operational actions.
+
+\chapter{Highly available databases}
+The first computer programs were focused mainly on the algorithms and computations. When computers become widely available and started to be used to serve business goals the collected information become more important. File-processing systems, supported by conventional operating systems didn't prove themselves sufficient for more complex use cases.
+
+The problems of data redundancy, consistency and atomicity of operations led to an effort to develop dedicated systems for storing and managing the data. Various types of database systems have been evolved over time to satisfy different technical and business use cases. The data loss affects the business significantly in most of the cases. The great importance of the data leads to necessity of implementing high availability for the database systems. Achieving high availability for databases is more challenging compared to stateless systems, because there must the the single source of truth \footnote{\url{https://www.talend.com/resources/single-source-truth/}} principle applied at the same time.
+
+\section{Relational database}
+The term relational database was used for the first time by E. F. Codd in his paper \footnote{\url{https://www.seas.upenn.edu/~zives/03f/cis550/codd.pdf}} titled \textit{A Relational Model of Data for Large Shared Data Banks} from 1970. He describes a new method of data storing and processing, which was the base for modern relational databases. Such databases use the relational model, which can be explained by following sentences:
+\begin{quote}
+The relational model uses a collection of tables to represent both data and the relationships among those data. Each table has multiple columns, and each column has a unique name. Tables are also known as relations. \cite{db, p. 9}.
+\end{quote}
+
+The relational databases using standardized Structured Query Language (SQL) \footnote{\url{https://modern-sql.com/standard}} become the most commonly used database solutions for web based applications of last decades.
+
+\section{Database replication} \label{sec: db_replication}
+When the relational databases are used to store important data, supporting some critical business or research, the database system is required to be highly available and immune against overloading. These requirements are similar to key features of Kubernetes \ref{sec:k8s} explained in the previous chapter. The solutions bringing this capabilities to database systems are also based mainly on building a database cluster distributed across multiple database nodes. However, stateful databases have some specifics, which must be taken into the account.
+
+In case the database system is composed of multiple nodes (servers), the data must by synchronized between all the nodes. The process of permanent copying of data changes from one node to another is called database replication.
+
+\subsection{CAP theorem}
+The CAP theorem \cite{cap}, also known as Brewer's theorem is a fundamental trade-off between concepts of \textit{consistency}, \textit{availability} and \textit{partition tolerance}. This idea was originally introduced by Eric Brewer in 2000 \footnote{\url{https://fenix.tecnico.ulisboa.pt/downloadFile/1126518382178117/10.e-CAP-3.pdf}}.
+
+The consistency condition states that all nodes of distributed system see the same data at the same time. In the world of databases it basically means, that read operation on any node including read-only replicas returns the value of the most recent write operation. A system is consistent if every transaction starts with the system in a consistent state and also ends with the consistent state.
+
+Availability simply means, that read an write operations have to be successfully handled all the time. The system is not allowed to ignore client's requests.
+
+The last requirement of the CAP theorem is the partition tolerance. Partition tolerance condition states that the system continue to work even in case some of the messages are delayed or lost on the way. The system can be partitioned into multiple groups, which can't communicate with each other. The system must be able to work correctly in such situation in order to be partition tolerant.
+
+The core idea of CAP theorem is that it is theoretically not possible to offer all three conditions at the same time. The important point to think about, when designing a replicated system is which conditions are crucial in order to serve the purpose.
+
+When designing the application supporting some business, calculating prices of the goods or services, the main priorities are the  consistency and partition tolerance. In case the application is for example collecting some data, the consistency is not critical, the data can be synchronized with some reasonable delay. The CAP theorem is visualized on figure \ref{fig:cap}
+
+\begin{figure}[H]
+\caption{CAP theorem visualization}
+\centering
+\includegraphics[width=0.8\textwidth]{CAP}
+\label{fig:cap}
+\end{figure}
+
+\subsection{Types of replication} \label{sec:types_of_replication}
+There are multiple approaches to database replication, each of them has some advantages and downsides as well. There are also various criteria, which can be used to categorize replication types.
+
+We can distinguish between \textit{single-master} and  \textit{multi-master} replication. More common and traditional way of database cluster design is to have just a single replica, which can handle write requests. The updates from master replica, processing writes is distributed to the rest of replicas, which operates in the read-only mode. In order to prevent overloading of master, the read requests can be redirected to slave (read-only) replicas.
+
+The second option is to allow load balancing also write requests to all nodes in the cluster. The distribution of all the requests can be an advantage, however, this approach adds a lot of complexity to the solution, it is less transparent and some conflicts in data consistency can occur easily.
+
+The second way of classification is to distinguish whether replication is synchronous or asynchronous. In case the transaction can be committed on master and copied to slave with a small delay, it is called asynchronous replication. Slave is usually a little bit behind, but transactions are fast and immediate. The synchronous replication is more strict in terms of consistency. The transaction can't be committed, before the update is copied to at least two nodes in the replicated cluster. This approach guaranties better consistency, but transactions take longer.
+
+There are also various alternatives how to implement copying of the data between nodes. The concept of physical replication means, that the data are copied in binary format to other nodes. The content of master's data directory is replicated to slaves byte by byte. The logical replication in contrast, transfers logical changes based on the replication identity. The advantages of physical replication are an easy setup and scaling up and down.
+
+The publication PostgreSQL Replication - Second Edition provides an answer to the question, when the physical replication should be used:
+\begin{quote}
+Physical replication is very convenient to use and especially easy to set up. It is
+widely used when the goal is to have identical replicas of your system (to have a
+backup or to simply scale up).
+In many setups, physical replication is the standard method that exposes the end
+user to the lowest complexity possible. It is ideal for scaling out the data. \cite{pg, p. 10.}
+\end{quote}
+
+Logical replication is more flexible, it allows to replicate just a selected tables and send different sets of changes to different subscribers. The setup of logical replication is usually more complex and fast scaling is harder. Logical replication is possible across the database versions, which can be beneficial especially for database upgrades.
+
+\subsection{Failover}
+High availability of the database is one of the main motivations to use replicated database clusters as it was mentioned at the beginning of section \ref{sec: db_replication}. There are multiple nodes keeping the current state of the data, which can be located in the different data centers. In case of the software or hardware failure on one of the nodes, there are still several other nodes, which holds the data and can handle incoming requests.
+
+In case of the single-master, sometimes also called master-slave replication setup, there are two different disaster scenarios. When the defect occurs on one of the slave nodes, it can be restarted or turned off and replaced by a new node. The affected slave replica won't be accepting the data increments for some time, but it can pull all the changes and synchronize with the master node after it's recovered. The functionality and performance of the cluster in not affected too much in majority of the cases.
+
+The worse situation is if the data corruption or some kind of software failure occurs on the master node. The usual solution of such scenario is to pick one of the healthy slave replicas and promote it to a new master. This replica starts handling write requests. All the other nodes, including the old master, in case it is available again, must be informed, which node is a new master. This procedure of promoting one of the slaves to a master node is called the failover.
+
+It is not easy to setup the failover correctly. In case the promotion happens immediately, after the current master becomes unavailable, some small network issue or delay can trigger failover when it is not necessary. In the other hand, the longer the waiting period is, the longer is the resulting unavailability of the cluster. Also in case the communication quality between the nodes is not working well, it can happen that there are multiple nodes running in master mode at the same time. The accurately configured and well working failover is basically the only way how to achieve reasonable level of high availability in the single-master replication cluster.
+
+\section{PostgreSQL} \label{sec:postgresql}
+The initial implementation of POSTGRES project \footnote{\url{https://www.postgresql.org/docs/11/history.html}}, based on the relational data model started in 1986 at the University of California at Berkeley Computer Science Department. The original query language PostQUEL was replaced by standardized SQL few years later, which resulted in choosing new name PostgreSQL for the whole project. PostgreSQL is an open source project, developed and supported by an active community. It runs on all major operating systems and it is extensible thanks to the concept of PostgreSQL extensions \footnote{\url{https://www.postgresql.org/docs/9.5/external-extensions.html}}.
+
+PostgreSQL supports storing and querying the data in JavaScript Object Notation (JSON) \footnote{\url{https://www.json.org}} format besides many traditional SQL data types. It is also not limited to the pure relational model design. The inheritance mechanism in PostgreSQL \footnote{\url{https://www.postgresql.org/docs/10/tutorial-inheritance.html}} allows to extend schema of already defined tables. The inheritance is a concept used mainly in Object-Oriented Database Management Systems \footnote{\url{https://database.guide/what-is-an-oodbms/}}. The documentation \footnote{\url{https://www.postgresql.org/about/}} defines PostgreSQL as an object-relational database, because of the support for mentioned features on top of the pure relational database principles.
+
+\section{Replication tools for PostgreSQL}
+PostgreSQL provides native support for replication setup to create an high availability cluster \footnote{\url{https://www.postgresql.org/docs/9.1/high-availability.html}}. PostgreSQL uses slightly different terminology and refers to master node as \textit{primary} replica and slave node as \textit{standby}. The native PostgreSQL replication supports Warm Standby/Log Shipping \footnote{\url{https://www.postgresql.org/docs/current/warm-standby.html}} high availability mode, which replicates the data to standby replicas, but they are not setup for queries. The standby replicas are only a backup, prepared to be promoted to master replica in case of a failover. In relese 9.0 the mode of Hot Standby/Streaming Replication \footnote{\url{https://www.postgresql.org/docs/current/hot-standby.html}} was added. The incoming read-only queries can be load balanced to standby replicas in the streaming replication mode and prevent overloading of the master node.
+
+Besides the native replication, there are multiple tools and systems for high availability setup, which provides additional features and requires less amount of manual work and configuration to have the replicated PostgreSQL cluster running.
+
+\subsection{Slony}
+Slony-I \footnote{\url{http://slony.info/}} is an asynchronous replication system for PostgreSQL including the capabilities to replicate large databases. The design objectives were based on the analysis of existing replication systems at the time of the design. Some of the main goals were an extensibility of the replication system and the concept of cascading slave nodes. The idea of cascading is, that every node, which receives the can forward the update  to other nodes. If slave nodes are able to send data to other slave replicas, it prevents overloading of the master node.
+
+\subsection{Bucardo}
+The use cases of Bucardo \footnote{\url{https://bucardo.org/Bucardo}} replication program are similar to Slony-I. The core part of Bucardo is a daemon written in Perl \footnote{\url{https://www.perl.org}} programming language.
+
+The replication information needed for the daemon is stored in the main bucardo database. This database contains list of databases involved in the replication, information about tables and replication mode. The daemon listens for the notify requests, connects to the remote databases and copies the data. The bucardo daemon controling the replication can be running on one of the servers involved in the replication or on the separate server.One of the advantages Bucardo provides is a multi-master replication mode.
+
+\subsection{Repmgr}
+Repmgr \footnote{\url{https://repmgr.org}} is an open source tool enhancing the PostgreSQL's built-in replication capabilities. Repmgr is a lightweight tool, it is implemented as a full PostgreSQL extension from version 4.0. It simplifies the cluster initialization and wraps parts of the replication setup and operations into one line commands.
+The first important components of repmgr is a command-line tool serving to perform administrative actions like node setup, promoting of chosen slave to master and displaying cluster status.
+
+Another component is a daemon called repmgrd \footnote{\url{https://repmgr.org/docs/4.0/using-repmgrd.html}}. The administration can optionaly run this management and monitoring daemon on each node in the replication cluster. Repmgrd is designed to automate many actions such as failover and pointing other slave to follow the new master node.
+
+\subsection{Pglogical}
+PostgreSQL version 10 \footnote{\url{https://www.postgresql.org/docs/10/release-10.html}} introduced the initial support for logical replication, which is the alternative approach to the standard streaming (physical) replication in PostgreSQL. The difference between these two principles was expained in section \ref{sec:types_of_replication}. The PostgreSQL extension called pglogical \footnote{\url{https://www.2ndquadrant.com/en/resources/pglogical/}} was developed to utilize latest PostgreSQL features and supporting use cases like upgrades between major database versions, selective replication of sets of tables and data merge from mutliple upsream servers.
 
 \chapter{PostgreSQL Operator}
+
+\section{Selected technologies}
+Repmgr used because it's easy to setup and automates cluster operations thanks to repmgrd. Logical replication is not widely used for the purpose of load balancing and recovery use cases. It's not so easy to scale the cluster size.
+
 \section{Operator design}
 \subsection{Operator API}
 \section{Cluster initialization}
-\section{Node interaction}
+\section{Database interaction}
+\section{Failover implementation}
 \section{Testing}
 
 \appendix %% Start the appendices.
