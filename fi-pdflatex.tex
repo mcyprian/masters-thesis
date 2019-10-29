@@ -58,12 +58,10 @@
     title         = {High-availability for PostgreSQL in OpenShift},
     keywords      = {PostgreSQL, OpenShift, Kubernetes, High-availability, Relational Databases, Data Replication, Operator Framework},
     abstract      = {%
-      This is the abstract of my thesis, which can
-https://www.overleaf.com/project/5cf67db3bef5951db84786cf
-      span multiple paragraphs.
+      Automated environments such as OpenShift and Kubernetes are widely used for stateless applications, however running stateful systems like databases in the same environments is not well adapted yet. This thesis focuses on the problematic of integrating stateful highly available database cluster into OpenShift. The solution includes identification of the threatens and benefits of running databases inside automated cloud environment and investigation on the existing tools. The implementation part consists of container images containing selected PostgreSQL high-availability tools and the operator managing these containers in the OpenShift environment. The operator is able to initialize the cluster, detect crashes and perform failover in the autonomous way.
     },
     thanks        = {%
-      Firstly, I would like to thank my thesis advisor doc. RNDr. Vlastislav Dohnal, Ph.D. for his support, patience and many pieces of valuable advice. I am also grateful to the people working on the OpenShift components, especially Jan Horák, who shared his technical knowledge and experience with me and was always willing to discuss my ideas and problems, that appeared during my research and design for this thesis.
+      Firstly, I would like to thank my thesis advisor doc. RNDr. Vlastislav Dohnal, Ph.D. for his support, patience and many pieces of valuable advice. I am also grateful to the people working on the OpenShift components, especially Jan Horák, who shared his technical knowledge and experience with me and was always willing to discuss my ideas and problems, that appeared during my research and design of the solution.
     },
     bib           = example.bib,
 }
@@ -142,9 +140,13 @@ The main goals of web service providers are to make the service high available, 
 
 Automated platforms currently work quite well for a simple applications. Additional level of complexity is added when  systems storing a specific state, such as databases are managed automatically by the platform. This area is still relatively unexplored and provides a plenty of fascinating design problems to be solved. That is the main reason why I have chosen integrating of high available database setup into on of the fully automated platform as a topic for my thesis.
 
-The main goal of this thesis is to explore an existing tools and solutions for both, database high availability and the automated platforms, choose the most suitable tools to be integrated into a single system and implement the missing automation logic. The resulting system should be able to handle real world use cases of high available database autonomously. The final part of the thesis will be to check and evaluate behaviour of the system in different scenarios.
+The main goal of this thesis is to explore an existing tools and solutions for both, database high availability and the automated platforms, choose the most suitable tools to be integrated into a single system and implement the missing automation logic. The resulting system should be able to handle real world use cases of high available database autonomously. The final part of the thesis is to prepare different scenarios, including misbehaviour and crashes and evaluate behaviour of the system.
 
-TODO: Navod na citanie prace, struktura prace v kapitole XXX je popsano...
+The following chapter \ref{chap:cloud_native} describes recent transformation of the approach to design and manage applications. The importance and core principles of automated platforms for service management, which are necessary for deeper understanding of the thesis topic are included as well.
+
+Chapter \ref{chap:ha_databases} provides theoretical background and summarizes current state of the database systems, especially solutions for highly available databases, which are the second important part of the topic.
+
+The final chapter \ref{chap:pg_in_openshift} focuses on the design, implementation and testing of the high-availability solution for PostgreSQL database running in OpenShift platform, based on the research and theoretical knowledge covered in first two chapters.
 
 \chapter{Cloud native computing} \label{chap:cloud_native}
 The new approach to design, create and deploy applications is much different from the traditional way, which includes many manual stages. The main goals are to get new services to the market faster, minimize the cost and increase scalability of the services. Automation of all the stages of service life cycle, using principles like micro services architecture, continuous delivery and container orchestration platforms is the key to achieve the goals. This particular approach to application life cycle combined with new tooling is usually called "Cloud Native" \cite{cloud_native}.
@@ -233,7 +235,7 @@ Pods are often short lived and volatile. A pod can crash, it can be restarted or
 single, consistent IP address and load balances the incoming requests to a set of pods.
 
 \subsection{Persistent volumes} \label{sec:pv}
-Each pod has its own file system, but it is ephemeral. At the moment when pod is restarted all the data are lost. This storage is sufficient for the configuration, which is regenerated during the initialization of the pod, but not for data that must survive restart of the pod. Also in case there are multiple containers running in a pod, they might need to share some files. The \textit{PersistentVolume} (PV) object solves both of these problems, file sharing and storing the data persistently. It is mounted to the pod and it's accessible for the processes running inside its containers. The PV is just an abstraction, a plenty of different underlying storage types are supported. A PersistentVolumeClaim (PVC) is a request for storage, that can be consumed by its user. The PVC defines size of the storage and access mode.
+Each pod has its own file system, but it is ephemeral. At the moment when pod is restarted all the data are lost. This storage is sufficient for the configuration, which is regenerated during the initialization of the pod, but not for data that must survive restart of the pod. Also in case there are multiple containers running in a pod, they might need to share some files. The \textit{PersistentVolume} (PV) object solves both of these problems, file sharing and storing the data persistently. It is mounted to the pod and it's accessible for the processes running inside its containers. The PV is just an abstraction, a plenty of different underlying storage types are supported. A PersistentVolumeClaim (PVC) is a request for storage, that can be consumed by its user. The PVC defines size of the storage and access mode. If the volumes needs to be provisioned dynamically, \textit{StorageClass} \footnote{https://kubernetes.io/docs/concepts/storage/storage-classes/} object can be used to specify the provisioner.
 
 \subsection{Resources} \label{sec:resources}
 Each pod definition in Kubernetes can contain a resource requests and limit for its containers \footnote{\url{https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/}}. The two most frequently used types of resources are \textit{CPU} specified in core units and \textit{memory} specified in bytes.
@@ -267,6 +269,7 @@ spec:
         ports:
         - containerPort: 80
 \end{lstlisting}
+
 This manifest defines deployment of three desired replicas of Nginx \footnote{\url{https://www.nginx.com}} container, which expose port 80. Deployment itself and specified replicas have the labels \footnote{\url{https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/}}, which serve for better organization of the objects in the cluster and divide objects into smaller subsets.
 
 \section{OpenShift} \label{sec:openshift}
@@ -291,7 +294,7 @@ The API can be extended by creating a Custom Resource \footnote{\url{https://kub
 
 The Operator SDK currently supports three types of operators \footnote{\url{https://operatorhub.io/getting-started}}. The first option is building the operator as a pure program in Go programming language \footnote{\url{https://golang.org}}. The SDK generates the boilerplate code, an example YAML manifest \ref{sec:manifest} and the endpoint for reconciliation loop. The second option is to create Ansible operator. Ansible \footnote{\url{https://www.ansible.com}} is a software provisioning and application deployment tool. Operator SDK allows to define an operator in form of Ansible playbook \footnote{\url{https://docs.ansible.com/ansible/latest/user_guide/playbooks.html}} and the SDK generates the Go program, which runs the playbook to manage Kubernetes objects. The last supported variant is a Helm operator. Helm \footnote{\url{https://helm.sh}} is a package manager for Kubernetes, which supports templates for manifests \ref{sec:manifest}, creating reproducible builds and installing and managing Kubernetes applications.  
 
-\chapter{Highly available databases}
+\chapter{Highly available databases} \label{chap:ha_databases}
 The first computer programs were focused mainly on the algorithms and computations. When computers become widely available and started to serve business goals, the collected information become more important. File-processing systems, supported by conventional operating systems didn't prove themselves sufficient for more complex use cases.
 
 The problems of data redundancy, consistency and atomicity of operations led to an effort to develop dedicated systems for storing and managing the data. Various types of database systems have been evolved over time to satisfy different technical and business use cases. The data loss affects the business significantly in most of the cases. The great importance of the data leads to necessity of implementing high availability for the database systems. Achieving high availability for databases is more complex compared to stateless systems, because there must be the single source of truth \footnote{\url{https://www.talend.com/resources/single-source-truth/}} condition satisfied at the same time.
@@ -387,7 +390,7 @@ Another component is a daemon called repmgrd \footnote{\url{https://repmgr.org/d
 \subsection{Pglogical}
 PostgreSQL version 10 \footnote{\url{https://www.postgresql.org/docs/10/release-10.html}} introduced the initial support for logical replication, which is an alternative approach to the standard streaming (physical) replication in PostgreSQL. The difference between these two principles was expained in section \ref{sec:types_of_replication}. The PostgreSQL extension called pglogical \footnote{\url{https://www.2ndquadrant.com/en/resources/pglogical/}} was developed to utilize latest PostgreSQL features and supporting use cases like upgrades between major database versions, selective replication of sets of tables and data merge from multiple upstream servers.
 
-\chapter{Replicated PostgreSQL in OpenShift}
+\chapter{Replicated PostgreSQL in OpenShift} \label{chap:pg_in_openshift}
 Running containerized \ref{sec:containers} applications in Kubernetes \ref{sec:k8s} and OpenShift \ref{sec:openshift} is well established way of deployment and management of software in companies, which have already adapted Could Native \ref{chap:cloud_native} approach. Relatively mature tools, workflows and well known best practices are available for stateless services, such as web applications, proxies and asynchronous workers managed by automated container management platform.
 
 The data layer is an essential component of real world applications, especially in business sector. Data, stored in stateful database systems are critical parts of the system and cannot be doubled or replaced as easily as stateless components. Running database systems in containerized way can be very uneasy. The common practice is that applications running in the Kubernetes clusters alongside other stateless components are connecting to the external database system. This database system is usually replicated \ref{sec:db_replication}, but it is not containerized and managed by the container management platform.
@@ -417,6 +420,21 @@ The concept of logical replication \ref{sec:types_of_replication} brings many be
 The asynchronous, physical replication based on master-slave model is the best match for automated solution, running in containers \ref{sec:containers}. When the advantage of light weight design and easy, setup and management in the automated way is taken into an account Repmgr \ref{sec:repmgr} is the most logical choice. Repmgr is implemented as PostgreSQL extension installed alongside standard PostgreSQL server. It is easy to setup and automates cluster operations including failover \ref{sec:failover} thanks to repmgrd.
 
 \section{PostgreSQL container images}
+The container images for replicated cluster need to contain PostgreSQL server, tooling and repmgr extension in order to deliver high availability. The second requirement is to satisfy all the OpenShift security policies and be able to run in the cloud environment without big amount of manual configuration required.
+
+Building similar image from scratch would require a lot of work and effort. One of the design goals of container images \ref{sec:containers} was an easy extensibility of existing artifacts.
+
+PostgreSQL container images \footnote{\url{https://github.com/sclorg/postgresql-container}} are an open source collection of container images designed to run in OpenShift. This repository supports multiple stable versions of PostgreSQL and each of them based on RHEL \footnote{\url{https://www.redhat.com/en/technologies/linux-platforms/enterprise-linux}}, CentOS \footnote{\url{https://www.centos.org}} and Fedora \footnote{\url{https://getfedora.org}} operating systems.
+
+Both RHEL and CentOS are the long term support distributions, they guarantee the API stability for long time period and there is not an easy way to add new packages or features to them in a reasonable time frame. Fedora in the other hand is a community distribution opened to the latest software of different kind, having a new release twice a year.
+
+Fedora based image from PostgreSQL container images project is available with complete installation of PostgreSQL version 10 and it is running in OpenShift very well. The only missing piece is the repmgr extension.
+
+Repmgr was not available in the standard RPM \footnote{\url{https://docs.fedoraproject.org/en-US/fedora/rawhide/system-administrators-guide/RPM/}} format, supported by Fedora distribution. It was necessary to build, test and create a new Fedora package for repmgr \footnote{\url{https://fedora.pkgs.org/30/fedora-updates-x86_64/repmgr-4.3.0-2.fc30.x86_64.rpm.html}} as part of implementing high-availability for PostgreSQL in OpenShift. The guidelines for making new RPM packages \footnote{\url{https://fedoraproject.org/wiki/New_package_process_for_existing_contributors}} were followed.
+
+After the package was approved and added to Fedora repositories \footnote{\url{https://docs.fedoraproject.org/en-US/quick-docs/repositories/}} it was necessary to add this package to existing Fedora based PostgreSQL 10 container image \footnote{\url{https://github.com/sclorg/postgresql-container/blob/generated/10/Dockerfile.fedora}}.
+
+PostgreSQL container image also provides a mechanism for image extending \footnote{\url{https://github.com/sclorg/postgresql-container/tree/generated/10\#extending-image}}. Custom initialization and configuration scripts, enabling the repmgr extension can be added to the image using this feature. 
 
 \section{PostgreSQL Operator}
 PostgreSQL Operator is based on the latest template for Go operators generated by Operator SDK, explained in Operator Framework section \ref{sec:operator_framework}. The core parts of Operator design are the API, explained in more details in the following subsection, internal representation of the PostgreSQL nodes running in the cluster, control loop logic and handlers for managing underlying fundamental Kubernetes objects.
@@ -463,6 +481,7 @@ Similarly to resources, the \textit{storage} field can contain the storage provi
 This initial API design is simple and straightforward, a replicated PostgreSQL cluster of desired size can be defined on few lines. However, when considering practical scenarios of the cluster administration, this design doesn't provide much flexibility. In case the administrator plans a minor update of the cluster, he has to update all the nodes, including master node at once. It also doesn't allow to identify the slave nodes and try some different experimental kind of storage without affecting master node.
 
 The final operator API design is slightly more complex and gives the administrator more flexibility in the cluster definition. Each node is identified by its name and separate configuration for each of them can be defined:
+
 \begin{lstlisting}
 apiVersion: postgresql.openshift.io/v1
 kind: PostgreSQL
@@ -507,11 +526,46 @@ spec:
 
 This solution defines nodes as a key value map. Each node can have specific resource requests and limits, it can be using different storage provisioner and storage settings and can use different container image. Additional \textit{priority} field was added to define node priority to became master node during the cluster initialization of after the failover \ref{sec:failover}. In case the administrator wants to experiment with some of the slave nodes, he can set its priority to zero and make sure this node won't be promoted to master before the experiment is finished.
 
+\subsection{Internal representation of nodes}
+ Each node defined in the operator API nodes map is represented as a Go structure called \textit{deploymentNode} in the operator logic. The operator creates a Kubernetes deployment \ref{sec:deployment} specifying a single replica pod \ref{sec:pod}. Cluster name and namespace are propagated into the deployment definition. There is also one Kubernetes service \ref{sec:service} created for each node to have a stable domain name to access node inside the cluster.
+ 
+ Go structure contains references to the deployment and service structures of the node and connection to its database. The database connection serves mainly to retrieve current replication status from inside the pod. Alongside the current status deploymentNode structure provides methods to create, update and delete the node.
+ 
+ The operator control loop works with the map of deploymentNode structures and executes methods this structure provides to make cluster reflect the desired state.
+
 \section{Cluster initialization}
 \section{Database interaction}
+Operator Framework \ref{sec:operator_framework} allows using different Go libraries for interaction with the Kubernetes cluster. The most common way is using Kubernetes API \footnote{\url{https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.10/\#-strong-api-overview-strong-}}. This robust API provides access to read an modify all kinds of Kubernetes objects in the cluster. Kubernetes API can be used to get pod and its containers specification and metadata and also to modify container resources, startup command, environment variables and many other attributes. However, API can't access the content of containers running in Kubernetes cluster. The usual way to read or debug filesystem inside container is executing shell inside running container \footnote{\url{https://kubernetes.io/docs/tasks/debug-application-cluster/get-shell-running-container/}}.
+
+Repmgr \ref{sec:repmgr} stores the cluster information in the PostgreSQL database system itself. Each node contains replication database repmgr containing important data about all the nodes, its roles and accessibility. The \textit{repmgr.nodes} table for simple replicated cluster with one master node and three slaves looks similar to example on table \ref{table:repmgr_nodes}.
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|c c c c c|}
+ \hline
+ node\_id & active & node\_name & type & priority \\ [0.5ex] 
+ \hline
+ 1 & t & node-one & primary & 100 \\ 
+
+ 2 & t & node-two & standby & 60 \\
+
+ 3 & t & node-three & standby & 30 \\
+
+ 4 & t & node-extra & standby & 0 \\ [1ex] 
+ \hline
+\end{tabular}
+\caption{Selected columns of \textit{repmgr.nodes} example.}
+\label{table:repmgr_nodes}
+\end{table}
+
+Data stored in \textit{repmgr.nodes} tables on replicated nodes are critical for correct behavior and setting of the cluster proxies and detection of the node misbehavior. Also, these data needs to be exposed to the administrator in operator status. Executing shell inside each node during every reconcile loop to get recent updates from inside the cluster is not very clean design. It would be necessary to parse data returned from exec command in text format and hard to detect errors.
+
+Alternative solution for interacting with the database from operator is to use database connections. Go provides package for handling PostgreSQL connections, queries and store results into native structures of the language. Constructor of the deploymentNode structure, explained in previous section opens the connection to PostgreSQL server running inside container using repmgr user and database. This database connection is stored alongside node's Kubernetes objects in the deploymentNode structure. Database queries are an efficient way to get fresh information about the replicated cluster nodes into the operator logic.
+
 \section{Password management}
 \section{Failover implementation}
 \section{Testing}
+\chapter{Conclusion}
 
 \appendix %% Start the appendices.
 \chapter{An appendix}
