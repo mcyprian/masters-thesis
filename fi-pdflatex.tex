@@ -297,7 +297,7 @@ OpenShift \cite{rhccos} is a Kubernetes container platform product having a paid
 
 Using OpenShift instead of pure open source Kubernetes project components brings also some limitations. Kubernetes supports many Linux distribution, while Openshift can be easily installed only on Red Hat Linux distributions like Red Hat Enterprise Linux (RHEL) \cite{rhel}, CentOS \cite{centos} and a couple more Red Hat alternatives.
 
-\section{Minikube}
+\section{Minikube} \label{sec:minikube}
 Distributed model is the core feature of Kubernetes, all the resource and important data about the desired cluster state are spread across multiple physical or virtual machines. The setup of fully working distributed Kubernetes cluster requires a lot of resources, configuration and maintenance work.
 
 When the Kubernetes applications are being developed locally or needs to be tested, building highly available distributed cluster is sometimes not necessary. Minikube \cite{minikube} is a tool for running single node Kubernetes cluster locally. It support all the major Kubernetes features and it can run on average personal computer or laptop.
@@ -422,7 +422,7 @@ The replication itself and the failover can be handled on Pgpool-II level as wel
 \subsection{Summary}
 Many different tools to handle high availability for PostgreSQL have been developed over the years. Theirs design goals and covered use cases are overlapping in many aspects. Available tools implement different replication approaches, and similar approaches are implemented in many different ways.
 
-Each solution has its benefits and down sites as well. Introduced alternatives are analysed and compared in the following Chapter. Section \ref{sec:selected_technologies} provides an explanation, which technologies are the best fit for automated cluster designed for Openshift environment.
+Each solution has its benefits and down sites as well. Introduced alternatives are analysed and compared in the following Chapter. Section \ref{sec:selected_technologies} provides an explanation, which technologies are the best fit for automated cluster designed for OpenShift environment.
 
 \chapter{Replicated PostgreSQL in OpenShift} \label{chap:pg_in_openshift}
 The data layer is an essential component of real world applications, especially in the business sector. Data, stored in stateful database systems are critical parts of the system and cannot be doubled or replaced as easily as stateless components. Running database systems in containerized way can be very uneasy. Scaling or restarts of the database nodes can lead to data integrity violations, or data loss if it isn't done carefully. The common practice is that applications running in the Kubernetes clusters alongside other stateless components are connected to the external database system. This database system is usually replicated (see Section \ref{sec:db_replication}), but it is not containerized and managed by the container management platform.
@@ -436,7 +436,7 @@ This Chapter covers objectives for highly available cluster, technologies select
 \section{Objectives}
 The main objective of this thesis is to design and implement replicated PostgreSQL cluster composed of multiple kinds of container images. The cluster setup, monitoring and management should require minimal effort. The main responsibilities of the automated solution are to properly initialize PostgreSQL nodes, keep them available and healthy and trigger the failover when the master node stops working correctly.
 
-The first step is to explore existing solutions and tools on both sides, PostgreSQL replication and managing stateful applications in Kubernetes and Openshift. Tools having attributes, which satisfy the requirements of automated, containerized environment need to be identified. After the right tools are selected, they must be containerized and prepared for running in the OpenShift environment.
+The first step is to explore existing solutions and tools on both sides, PostgreSQL replication and managing stateful applications in Kubernetes and OpenShift. Tools having attributes, which satisfy the requirements of automated, containerized environment need to be identified. After the right tools are selected, they must be containerized and prepared for running in the OpenShift environment.
 
 The core component, which needs to be designed and implemented is the operator bringing all the pieces together, monitoring the cluster, exposing the API for its management and ensuring the correct behavior and high availability.
 
@@ -455,10 +455,10 @@ The asynchronous, physical replication based on master-slave model is the best f
 
 For connection pooling and load balancing of read-only requests in PostgreSQL, Pgpool-II (see Section \ref{sec:pgpool} is the only mature technology available.
 
-The final list of technologies selected for implementation of high availability for PostgreSQL in automated Openshift environment are Repmgr extension for replication setup and monitoring, repmgrd deamon performing the failover in automated way, Pgpool-II serving as a proxy for connection pooling and load balancing and pure Go operator exposing the cluster API and managing all the Kubernetes objects, which encapsulate all the components.
+The final list of technologies selected for implementation of high availability for PostgreSQL in automated OpenShift environment are Repmgr extension for replication setup and monitoring, repmgrd deamon performing the failover in automated way, Pgpool-II serving as a proxy for connection pooling and load balancing and pure Go operator exposing the cluster API and managing all the Kubernetes objects, which encapsulate all the components.
 
 \section{Cluster design}
-There are multiple design goals, which needs to be achieved to ensure high availability and make the solution capable of running in Openshift environment. To achieve high availability, not only replication on the database system level needs to be set up, but every potential single point of failure must be eliminated from the cluster.
+There are multiple design goals, which needs to be achieved to ensure high availability and make the solution capable of running in OpenShift environment. To achieve high availability, not only replication on the database system level needs to be set up, but every potential single point of failure must be eliminated from the cluster.
 
 Another important goal is making every component except storage replaceable, able to load the configuration and start automatically during first initialization and after restart as well. The incoming requests should be distributed across multiple pods to prevent overloading of some cluster components.
 
@@ -479,7 +479,7 @@ One Kubernetes service (see Section \ref{sec:service}) serves as a proxy for cur
 
 The second service is load balancing incoming requests to all the PostgreSQL nodes in the cluster. Slaves are running in hot standby mode, so this service can be used for read-only queries to prevent overloading of master replica.
 
-Pgpool-II containers are used as a proxy. The replication and failover are hadled by Repmgr installed inside PostgreSQL container, these features are disabled in Pgpool-II containers. The proxies are configured to load balance read-only queries to the read-only service. Pgpool-II load balancing is session based, which means that consequent requests from single client goes to the same database node. This approach minimizes the potential issues related to asynchronous replication.
+Pgpool-II containers are used as a proxy. The replication and failover are handled by Repmgr installed inside PostgreSQL container, these features are disabled in Pgpool-II containers. The proxies are configured to load balance read-only queries to the read-only service. Pgpool-II load balancing is session based, which means that consequent requests from single client goes to the same database node. This approach minimizes the potential issues related to asynchronous replication.
 
 The number of database nodes, Pgpool-II replicas and many other configuration details of the cluster can be adjusted by the administrator using cluster API.
 
@@ -500,7 +500,7 @@ After the package was approved and added to Fedora repositories \cite{fedora_rep
 
 PostgreSQL container image also provides a mechanism for image extending \cite{pg_cnt_extending}. Custom initialization and configuration scripts, enabling the Repmgr extension can be added to the image using this feature.
 
-Pgpool-II was available in RPM format, so it was enough to add this package to the Fedora base image for Openshift, add a couple of configuration and initialization scripts and build images, which can run in front of the replicated PostgreSQL nodes and serve for connection pooling and load balancing.
+Pgpool-II was available in RPM format, so it was enough to add this package to the Fedora base image for OpenShift, add a couple of configuration and initialization scripts and build images, which can run in front of the replicated PostgreSQL nodes and serve for connection pooling and load balancing.
 
 All three components, spec file for Repmgr RPM package, PostgreSQl container scripts and Pgpool-II container definition are included in the List of electronic appendices \ref{chap:appendices}.
 
@@ -560,7 +560,7 @@ spec:
   managementState: managed
   nodes:
     node-one:
-      image: "mcyprian/postgresql-10-fedora29:1.2"
+      image: mcyprian/postgresql-10-fedora29:1.2
       priority: 100
       resources:
         limits:
@@ -573,7 +573,7 @@ spec:
         storageClassName: local-storage
         size: 20Gi
     node-two:
-      image: "mcyprian/postgresql-10-fedora29:1.2"
+      image: mcyprian/postgresql-10-fedora29:1.2
       priority: 60
       resources:
         limits:
@@ -586,7 +586,7 @@ spec:
         storageClassName: local-storage
         size: 20Gi
     node-experimental:
-      image: "mcyprian/postgresql-10-fedora29:latest"
+      image: mcyprian/postgresql-10-fedora29:latest
       priority: 0
       storage:
         storageClassName: local-storage
@@ -647,21 +647,96 @@ In case the current master replica becomes unavailable and the connnection is no
 As it was mentioned in Section \ref{sec:selected_technologies}, the replication and failover modes are disabled in Pgpool-II containers, they serve only for connection pooling and load balancing. The replicated PostgreSQL managed by the operator can be used also without Pgpool-II layer. The only issue is that read-only service is hardly usable, but replication and failover are independent from the proxies. As the PostgreSQL replication layer and proxy layer are loosely coupled, it is not necessary to manage Pgpool-II components from the operator. There are separate Kubernetes manifests created for Pgpool-II deployment and service that can be adjusted by the administrator and used according to his needs.
 
 \chapter{Testing} \label{chap:testing}
+One of the thesis objectives is to verify correctness of the solution by simulating crashes and testing behavior of the cluster. There are many testing methods and testing can be done on different levels. The important functions and components of the PostgreSQL operator are covered by unit tests, but this chapter focuses mainly on testing of the whole solution from the start to the end. End-to-end testing can discover issues in the operator logic, PostgreSQL container scripts, proxies and in the integration of these components.
+
+Continuous integration and delivery is a very common practice in the Cloud Native world. If the tests can be fully automated it is a big advantage. In the other hand, automation of the testing process sometimes requires isolating some components and mocking out the rest of the system.
+
+The highly available PostgreSQL cluster was tested in two phases. The result of first phase is a set of fully automated tests of the cluster designed to run in the CI. Testing of the full setup, including all the components from the database system nodes to the client application with different settings applied was done manually as a separate step. Following sections explain both phases in more details and summarize the test results.
 
 \section{Automated End-to-End testing}
+The OpenShift environment is quite specific, the proper end-to-end test can be done only inside the real OpenShift cluster. The Operator framework (see Section \ref{sec:operator_framework}) provides an E2E test framework to ensure the operator works as intended in real world scenarios. Each test defines test cluster, which is created in OpenShift in a temporary namespace. The cluster can be modified and multiple assertion of Kubernets objects and theirs state can be specified. All the objects and the namespace are deleted after the test is finished. Minishift or Minikube (see Section \ref{sec:minikube}) are ideal tools for running similar tests locally or in the CI.
+
+The first automated test is testing scaling of slave node. A small cluster composed of one master and one slave node is initialized. When the initialization is complete and the cluster returns correct status, slave is removed from cluster specification and the change is applied to the cluster. End-to-end test utilities provide \textit{WaitForDeletion} call. This is used to verify that slave node was successfuly removed from the cluster. Assertion of the cluster status, reporting single master node follows.  Slave node is upscaled again and the final check ensures that the node was registered as a slave and connected back to the cluster.
+
+The second test is checking cluster behavior after some of the nodes is restarted, which can happen relatively often in the OpenShift environment. The cluster of size two is initialized, slave node is restarted and the cluster status is checked, when the slave node is up again. The same is done for master node afterwards. This scenario ensures that failover is not triggered, when the master node is simply restarted and becomes available in short period of time.
+
+The failover test, simulates failover scenario in a small cluster. Initialization is the same as in the two previous scenarios. The master node is downscaled and it stops communicate with the slave. The assertion checks that failover is triggered after some time period and the slave node is promoted to new master.
+
+These tests are checking the basic behavior of the operator and logic inside containers. It can be run in the CI and it can help to discover regressions when some changes are applied to the operator.
 
 \section{Manual failover testing}
+The goal of manual failover testing is to simulate the crash of master node and check if the failover works correctly. First requirement for proper testing is to prepare an environment, which will be as close to the real production cloud environment as possible, Test verifies that the master node misbehavior is detected, the slave with the highest priority is selected for promotion and the downtime is reasonably short.
+
+The test environment is built inside Minishift cluster and consists of following components:
+\begin{itemize}
+  \item PostgresSQL cluster - a PostgreSQL cluster managed by the operator 
+  \item Pgpool-II deployment - Pgpool-II proxy containers
+  \item Test server - two replicas of a simple web based application
+\end{itemize}
+
+A test user and database are created on the PostgreSQL nodes. The test database contains single table, which stores the timestamps. Pgpool-II deployment is configured to redirect read-only queries to the read-only PostgreSQL service and write queries to the primary service.
+
+Test server is a simple application providing two routes, the first one serves to write current timestamp to the database and the second one reads and returns the last stored timestamp. Two replicas of the test server are deployed to the same Minishift cluster and test database credentials are injected into them. Test servers are connected to Pgpool-II service not to the PostgreSQL nodes directly. Forwarding of the local ports to the test server pods is set up. The two local scripts are periodically sending requests to both routes and logging the responses. One script is called \textit{writer}, it is calling route to store current timestamp every second in an infinite loop. The second one, called \textit{reader} works similarly, but it just retrieves and log the last stored timestamp.
+
+The full failover test scenario is following:
+\begin{enumerate}
+  \item  A fresh test environment is initialized. 
+  \item Local ports are forwarded to test server pods.
+  \item A \textit{test\_timestamps} table is created in test database.
+  \item The reader and writer scripts are started.
+  \item Corruption of the volume mounted to primary node is simulated.
+  \item The failover process is monitored, until writes to the new master start to succeed.
+  \item The downtime is measured based on the reader and writer logs.
+\end{enumerate}
+
+When the master node stops responding, slaves try to reconnect multiple times before the failover is triggered. Repmgrd (see Section \ref{sec:repmgr}), allows to configure number of attempts to reconnect and the delay between attempts. The longer reconnect interval means that master node will be unavailable for longer time before the failover is triggered. In the other hand in case the interval is too short the minor network issue or restart of the master node can trigger the failover even when it is not really necessary.
+
+The test scenario was repeated multiple times with different cluster size and reconnect interval settings. The test results are summarized in Table \ref{table:failover_testing}.
+
+\begin{table}[ht!]
+\centering
+\begin{tabular}{|c c c c|}
+ \hline
+ cluster size & reconnect interval & write downtime & read downtime \\ [0.5ex]
+ \hline
+ 2 & 6 x 10s & 66s & 4s \\
+ 3 & 6 x 10s & 71s & 5s \\
+ 2 & 4 x 10s & 48s & 0s \\
+ 3 & 4 x 10s & 52s & 0s \\
+ 2 & 4 x 7s  & 40s & 0s  \\ 
+ 3 & 4 x 7s  & 43s & 4s  \\ [1ex]
+ \hline
+\end{tabular}
+\caption{Service downtime during failover}
+\label{table:failover_testing}
+\end{table}
+
+The results of failover testing proof high availability of the cluster. It is able to failover autonomously in case of serious crashes or disk corruption on the master node. The downtime of read queries is negligible and the write downtime is under one minute if the correct settings are used. The number of slave nodes in the cluster has minimal impact on the downtime duration.
 
 \chapter{Conclusion} \label{chap:conclusion}
+The main objective of this thesis was to design and implement PostgreSQL cluster that provides high availability and runs in the cloud environment with minimal effort required from the administrator.
+
+Many existing alternatives for PostgreSQL replication were compared and analysed. It was necessary to identify tools, which satisfy requirements of the cloud environment like easy setup, scaling and ability to survive restarts.
+
+The solution consists of the containerized PostgreSQL nodes with Repmgr extension backed by persistent storage, Pgpool-II containers serving as a proxy and the PostgreSQL operator. The high availability is achieved by streaming replication and automatic failover, which is triggered if master node crashes. the PostgreSQL operator is designed to initialize, manage and monitor the replicated cluster. It exposes an API, which allows to define a replicated cluster of desired size using a single Kubernetes manifest.
+
+The ability of autonomous cluster setup, scaling and failover was proved by the tests simulating crashes in the Openshift environment. The downtime during failover can be reduced to less than one minute.
+
+The cluster API is highly extensible. If it turns out that some of the PostgreSQL or Repmgr settings needs to be often adjusted by cluster users, it can be added as a new field to the manifest and propagated to containers by the operator.
+
+Major PostgreSQL version upgrade can be problematic, especially in the systems based on physical replication. Major upgrade is not covered by the operator, however it makes the cluster initialization trivial. An empty cluster using the new PostgreSQL version can be initialized alongside the original one and logical replication can be set up to synchronize the data to the new master node. Full support for similar scenario can be potentially also integrated into the operator.
+
+Running databases inside Kubernetes and Openshift is not easy. However, if the right tools are used and the operator is managing all the resources it can be done efficiently and it can bring benefits to the administrators. Running different kinds of databases in the fully automated cloud environments alongside applications might become the standard solution in the near future.
+
 
 \appendix %% Start the appendices.
 \chapter{List of electronic appendices} \label{chap:appendices}
 Electronic appendices contain source codes, container image definitions and other software components implemented as part of the highly available solution for PostgreSQL running in OpenShift:
 \begin{itemize}
-  \item postgresql-operator - source code of the PostgreSQL operator
-  \item postgresql-container - Fedora based PostgreSQL container image, containing Repmgr extension and shell scripts
-  \item pgpool-fedora-container - Fedora based Pgpool-II container image and corresponding Kubernetes manifests
-  \item repmgr.spec - spec file of repmgr RPM package
+  \item postgresql-operator.zip - source code of the PostgreSQL operator
+  \item postgresql-container.zip - Fedora based PostgreSQL container image, containing Repmgr extension and shell scripts
+  \item pgpool-fedora-container.zip - Fedora based Pgpool-II container image and corresponding Kubernetes manifests
+  \item repmgr.zip - Repmgr RPM package source files
 \end{itemize}
 
 \end{document}
