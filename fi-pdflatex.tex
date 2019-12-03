@@ -58,7 +58,7 @@
     title         = {High-availability for PostgreSQL in OpenShift},
     keywords      = {PostgreSQL, OpenShift, Kubernetes, High-availability, Relational Databases, Data Replication, Operator Framework},
     abstract      = {%
-      Running containerized applications in Kubernetes and OpenShift is well established way of deployment and management of software in companies, which have already adopted Could Native approach. Relatively mature tools, workflows and well known best practices are available for stateless services, such as web applications and proxies managed by automated container management platform.  Deploying stateful systems like databases into the same environments is not very common. This thesis focuses on the problematic of integrating stateful, highly available database cluster into OpenShift. The solution includes investigation on the existing tools and identification of the threatens and benefits of running databases inside automated cloud environment. The implementation part consists of container images containing selected PostgreSQL tools for high-availability  and the operator managing these containers in the OpenShift environment. The operator is able to initialize the cluster, detect crashes and perform failover in the autonomous way.
+      Running containerized applications in Kubernetes and OpenShift is a well-established way of deployment and management of software in companies, which have already adopted Could Native approach to software life cycle. Relatively mature tools, workflows and well-known best practices are available for stateless services, such as web applications and proxies managed by automated container management platform.  Deploying stateful systems like databases into the same environments is not very common. This thesis focuses on the problematic of integrating stateful, highly available database cluster into OpenShift. Existing tools are surveyed, analyzed for their deployment in automated cloud environments and benefits as well as threats. The solution consists of container images containing selected PostgreSQL tools for high-availability and operator managing these containers in the OpenShift environment. The operator is able to initialize the cluster, detect crashes and perform failover in an autonomous way.
     },
     thanks        = {%
       Firstly, I would like to thank my thesis advisor doc. RNDr. Vlastislav Dohnal, Ph.D. for his support, patience and many pieces of valuable advice. I am also grateful to the people working on the OpenShift components, especially Jan Horák, who shared his technical knowledge and experience with me and was always willing to discuss my ideas and problems, that appeared during my research and design of the solution.
@@ -138,20 +138,19 @@
 \makeatother
 \begin{document}
 \chapter{Introduction}
-
-We live in the computer age. People can access information and knowledge faster and easier than ever before. The evolution of information technology in the last few decades have a great impact on the society. The heavy personal computers have been replaced by tiny devices, laptops, cell phones and smart watches. The performance have been increased, internet connection is available almost everywhere and the number of easy to use applications and web pages for various purposes and have grown significantly.
+We live in the computer age. People can access information and knowledge faster and easier than ever before. The evolution of information technology in the last few decades have a great impact on society. The heavy personal computers have been replaced by tiny devices, laptops, cell phones and smart watches. The performance has been increased, internet connection is available almost everywhere and the number of easy to use applications and web pages for various purposes has grown significantly.
 
 This revolution also brought a lots of new challenges and rapid changes on the other side of computer industry. All the data centers, where pieces of information are stored, computers, which runs those services, web pages and applications must have been adapted to the requirements of this age equally well.
 
-The main goals of web service providers are to make the service high available, capable of handling big number of requests each second and update running services smoothly. The service should survive disk corruption on some of the computers it is running on, small network issues and sometimes event natural disasters in the area, where data center is located. Ideally, the user shouldn't experience any downtime of the service, when it is being updated to newer version. Software engineers have started an effort to develop complex platforms able to face such challenges in the automated way.
+The main goals of web service providers are to make the service highly available, capable of handling a big number of requests each second and update running services smoothly. The service should survive disk corruption on some of the computers it is running on, small network issues and sometimes event natural disasters in the area, where the data center is located. Ideally, the user shouldn't experience any downtime of the service, when it is being updated to a newer version. Software engineers have started an effort to develop complex platforms able to face such challenges in an automated way.
 
-Automated platforms currently work quite well for a simple applications. Additional level of complexity is added when systems storing a specific state, such as databases are managed automatically by the platform. This area is still relatively unexplored and provides a plenty of fascinating design problems to be solved. That is the main reason why I have chosen integrating highly available database system into the automated platform as a topic for my thesis.
+Automated platforms currently work quite well for a simple application. An additional level of complexity is added when systems storing a specific state, such as databases are managed automatically by the platform. This area is still relatively unexplored and provides plenty of fascinating design problems to be solved. That is the main reason why I have chosen integrating highly available database system into the automated platform as a topic for my thesis.
 
-The main goal of this thesis is to explore an existing tools and solutions for both, database high availability and the automated platforms, choose the most suitable tools to be integrated into a single system and implement the missing automation logic. The resulting solution should be able to handle real world use cases of highly available database system autonomously. The final part of the thesis is to prepare different test scenarios, including misbehaviour and crashes and evaluate behaviour of the system.
+The main goal of this thesis is to explore existing tools and solutions for both, database high availability and the automated platforms, choose the most suitable tools to be integrated into a single system and implement the missing automation logic. The resulting solution should be able to handle real-world use cases of highly available database system autonomously. The final part of the thesis is to prepare different test scenarios, including misbehaviour and crashes and evaluate the behaviour of the system.
 
-The following Chapter \ref{chap:cloud_native} describes recent transformation of the approach to design and manage applications. The importance and core principles of automated platforms for service management, which are necessary for deeper understanding of the thesis topic are explained.
+The following Chapter \ref{chap:cloud_native} describes the recent transformation of the approach to design and manage applications. The importance and core principles of automated platforms for service management, which are necessary for a deeper understanding of the thesis topic are explained.
 
-Chapter \ref{chap:ha_database_systems} provides theoretical background and summarizes current state of the database systems, especially solutions to achieve high availability in database systems, which are the second important part of the topic.
+Chapter \ref{chap:ha_database_systems} provides theoretical background and summarizes the current state of the database systems, especially solutions to achieve high availability in database systems, which are the second important part of the topic.
 
 The next Chapter \ref{chap:pg_in_openshift} focuses on the design, implementation and testing of the high-availability solution for PostgreSQL database system running on OpenShift platform, based on the research and theoretical knowledge covered in two previous chapters.
 
@@ -188,7 +187,7 @@ Control Groups alongside namespaces are a fundamental aspects of an operating sy
 
 LXC \cite{lxc}, containerd \cite{containerd}, rkt \cite{rkt}, CRI-O \cite{cri-o} and many others are the implementations of Linux container runtime, based on similar principles which have been introduced since 2008. Not only container runtimes but also other kinds of tools for building, managing and orchestrating containers have been developed since the initial rise of containers. After the initial period, when the technology was relatively unstable and challenging, it finally become mature enough to be widely used in production.
 
-When comparing Linux containers to the concept of virtual machines, the traditional virtualization runs an entire guest operating system in a virtual machine while containers share kernel of the host. Figure \ref{fig:cnt-vs-vm} shows the difference in virtualization layers between Virtual Machine type 1 hypervisor \cite{hypervisors} and Linux containers. Thanks to its lightweight design, containerization provides shorter build and setup times, smaller image size and real-time provisioning and scalability. In the other hand, process level isolation is less secure than full isolation of the guests systems. It is necessary to follow the best practices when working with Linux containers in order to meet the security standards for production systems. In general Linux containers satisfies the requirements of Cloud Native approach workflows better than heavyweight virtualization methods.
+When comparing Linux containers to the concept of virtual machines, the traditional virtualization runs an entire guest operating system in a virtual machine while containers share kernel of the host. Figure \ref{fig:cnt-vs-vm} shows the difference in virtualization layers between Virtual Machine type 1 hypervisor \cite{hypervisors} and Linux containers. Thanks to its lightweight design, containerization provides shorter build and setup times, smaller image size and real-time provisioning and scalability. On the other hand, process level isolation is less secure than full isolation of the guests systems. It is necessary to follow the best practices when working with Linux containers in order to meet the security standards for production systems. In general Linux containers satisfies the requirements of Cloud Native approach workflows better than heavyweight virtualization methods.
 
 \begin{figure}[H]
 \caption{Comparison of virtual machines and containers}
@@ -352,7 +351,7 @@ There are also various alternatives how to implement copying of the data between
 
 Physical replication is more mature and standard way of streaming data among nodes. It is usually easier to set up, and it works well for cases when scaling cluster size up and down is needed. The limitation is that typically the same version of software needs to be on all nodes.
 
-Logical replication, in the other hand is more flexible, it allows to replicate just a selected tables and send different sets of changes to different subscribers. The setup of logical replication is usually more complex and fast scaling is harder. Logical replication is possible across the database versions, which can be beneficial especially for database upgrades.
+Logical replication, on the other hand is more flexible, it allows to replicate just a selected tables and send different sets of changes to different subscribers. The setup of logical replication is usually more complex and fast scaling is harder. Logical replication is possible across the database versions, which can be beneficial especially for database upgrades.
 
 \subsection{Failover} \label{sec:failover}
 High availability of the database is one of the main motivations to use replicated database clusters as it was mentioned at the beginning of Section \ref{sec:db_replication}. There are multiple nodes keeping the current state of the data, which can be located in the different data centers. In case of the software or hardware failure on one of the nodes, there are still several other nodes, which holds the data and can handle incoming requests.
@@ -361,7 +360,7 @@ In case of the single-master replication, sometimes also called master-slave set
 
 The worse situation is if the data corruption or some kind of software failure occurs on the master node. The usual solution of such scenario is to choose one of the healthy slave replicas and promote it to a new master. This replica starts handling write requests after promotion. All the other nodes, including the old master, in case it is available again, must be informed, which node is a new master. This procedure of promoting one of the slaves to a master node is called the failover.
 
-It is not easy to set up the failover correctly. In case the promotion happens immediately after the current master becomes unavailable, some small network issue or delay can trigger the failover even when it is not necessary. In the other hand, the longer waiting period also prolongs resulting unavailability of the cluster. In case the communication quality between the nodes is not working well, it can happen that multiple nodes run in master mode at the same time. The properly configured and well working failover is basically the only way to achieve reasonable level of high availability in the single-master replication cluster.
+It is not easy to set up the failover correctly. In case the promotion happens immediately after the current master becomes unavailable, some small network issue or delay can trigger the failover even when it is not necessary. On the other hand, the longer waiting period also prolongs resulting unavailability of the cluster. In case the communication quality between the nodes is not working well, it can happen that multiple nodes run in master mode at the same time. The properly configured and well working failover is basically the only way to achieve reasonable level of high availability in the single-master replication cluster.
 
 \subsection{CAP theorem}
 The CAP theorem \cite{cap}, visualized in Figure \ref{fig:cap} is a fundamental trade-off between concepts of \textit{consistency}, \textit{availability} and \textit{partition tolerance}. This idea was originally introduced by Eric Brewer in 2000 \cite{brewer_cap}.
@@ -490,7 +489,7 @@ Building similar image from scratch would require a lot of work and effort. One 
 
 PostgreSQL container images \cite{pg_cnt} are an open source collection of images designed to run in OpenShift or plain Kubernetes. This repository supports multiple stable versions of PostgreSQL and each of them based on RHEL \cite{rhel}, CentOS \cite{centos} and Fedora \cite{getfedora} operating systems.
 
-Both RHEL and CentOS are the long term support distributions, they guarantee the API stability for long time period, so there is not an easy way to add new packages or features to these distributinos in a reasonable time frame. Fedora, in the other hand is a community distribution opened to the latest software of different kinds. A new version of Fedora is released twice a year.
+Both RHEL and CentOS are the long term support distributions, they guarantee the API stability for long time period, so there is not an easy way to add new packages or features to these distributinos in a reasonable time frame. Fedora, on the other hand is a community distribution opened to the latest software of different kinds. A new version of Fedora is released twice a year.
 
 Fedora based image from PostgreSQL container images project is available with complete installation of PostgreSQL version 10 and it is running in OpenShift very well. The only missing piece of software is the Repmgr extension.
 
@@ -647,36 +646,38 @@ In case the current master replica becomes unavailable and the connnection is no
 As it was mentioned in Section \ref{sec:selected_technologies}, the replication and failover modes are disabled in Pgpool-II containers, they serve only for connection pooling and load balancing. The replicated PostgreSQL managed by the operator can be used also without Pgpool-II layer. The only issue is that read-only service is hardly usable, but replication and failover are independent from the proxies. As the PostgreSQL replication layer and proxy layer are loosely coupled, it is not necessary to manage Pgpool-II components from the operator. There are separate Kubernetes manifests created for Pgpool-II deployment and service that can be adjusted by the administrator and used according to his needs.
 
 \chapter{Testing} \label{chap:testing}
-One of the thesis objectives is to verify correctness of the solution by simulating crashes and testing behavior of the cluster. There are many testing methods and testing can be done on different levels. The important functions and components of the PostgreSQL operator are covered by unit tests, but this chapter focuses mainly on testing of the whole solution from the start to the end. End-to-end testing can discover issues in the operator logic, PostgreSQL container scripts, proxies and in the integration of these components.
+One of the thesis objectives is to verify correctness of the solution by simulating crashes and testing behavior of the cluster. There are many testing methods, so testing can be done on different levels. The important functions and components of the PostgreSQL operator are covered by unit tests, but this chapter focuses mainly on testing of the whole solution from the start to the end. The end-to-end testing can discover issues in the operator logic, PostgreSQL container scripts, proxies and in the integration of these components.
 
-Continuous integration and delivery is a very common practice in the Cloud Native world. If the tests can be fully automated it is a big advantage. In the other hand, automation of the testing process sometimes requires isolating some components and mocking out the rest of the system.
+Continuous integration (CI) and delivery is a very common practice in the Cloud Native world. If the tests can be fully automated it is a big advantage. On the other hand, automation of the testing process sometimes requires isolating some components and mocking out the rest of the system.
 
-The highly available PostgreSQL cluster was tested in two phases. The result of first phase is a set of fully automated tests of the cluster designed to run in the CI. Testing of the full setup, including all the components from the database system nodes to the client application with different settings applied was done manually as a separate step. Following sections explain both phases in more details and summarize the test results.
+The highly available PostgreSQL cluster was tested in two phases. The result of first phase is a set of fully automated tests of the cluster designed to run in CI. Testing of the full setup, including all the components from the database system nodes to the client application with different settings applied was done manually as a separate step. Following sections explain both phases in more details and summarize the test results.
 
-\section{Automated End-to-End testing}
-The OpenShift environment is quite specific, the proper end-to-end test can be done only inside the real OpenShift cluster. The Operator framework (see Section \ref{sec:operator_framework}) provides an E2E test framework to ensure the operator works as intended in real world scenarios. Each test defines test cluster, which is created in OpenShift in a temporary namespace. The cluster can be modified and multiple assertion of Kubernets objects and theirs state can be specified. All the objects and the namespace are deleted after the test is finished. Minishift or Minikube (see Section \ref{sec:minikube}) are ideal tools for running similar tests locally or in the CI.
+\section{Automated end-to-end testing}
+The OpenShift environment is quite specific, proper end-to-end test can be done only inside the real OpenShift cluster. The Operator framework (see Section \ref{sec:operator_framework}) provides an end-to-end test framework to ensure the operator works as intended in real-world scenarios. Each test defines test cluster, which is created in OpenShift in a temporary namespace. The cluster can be modified and multiple assertion of Kubernets objects and theirs state can be specified. All the objects and the namespace are deleted after the test is finished. Minishift or Minikube (see Section \ref{sec:minikube}) are ideal tools for running similar tests locally or in the CI.
 
-The first automated test is testing scaling of slave node. A small cluster composed of one master and one slave node is initialized. When the initialization is complete and the cluster returns correct status, slave is removed from cluster specification and the change is applied to the cluster. End-to-end test utilities provide \textit{WaitForDeletion} call. This is used to verify that slave node was successfuly removed from the cluster. Assertion of the cluster status, reporting single master node follows.  Slave node is upscaled again and the final check ensures that the node was registered as a slave and connected back to the cluster.
+The first automated test focuses on scaling of the nodes. A small cluster composed of one master and one slave node is initialized. When the initialization is complete and the cluster returns correct status, slave is removed from cluster specification and the change is applied to the cluster. End-to-end test utilities provide \textit{WaitForDeletion} call. This is used to verify that slave node was successfuly removed from the cluster. Assertion of the cluster status, reporting single master node follows.  Slave node is upscaled again and the final check ensures that the node was registered as a slave and connected back to the cluster.
 
-The second test is checking cluster behavior after some of the nodes is restarted, which can happen relatively often in the OpenShift environment. The cluster of size two is initialized, slave node is restarted and the cluster status is checked, when the slave node is up again. The same is done for master node afterwards. This scenario ensures that failover is not triggered, when the master node is simply restarted and becomes available in short period of time.
+The second test checks cluster behavior when some of the nodes are restarted, which can happen relatively often in the OpenShift environment. The cluster of size two is initialized, slave node is restarted and the cluster status is checked, when the slave node is up again. The same is done for master node afterwards. This scenario ensures that failover is not triggered, when the master node is simply restarted and becomes available in a short period of time.
 
-The failover test, simulates failover scenario in a small cluster. Initialization is the same as in the two previous scenarios. The master node is downscaled and it stops communicate with the slave. The assertion checks that failover is triggered after some time period and the slave node is promoted to new master.
+The failover test, simulates failover scenario in a small cluster. Initialization is the same as in the two previous scenarios. The master node is downscaled and it stops communicating with the slave. The assertion checks that failover is triggered after some time and the slave node is promoted to new master.
 
-These tests are checking the basic behavior of the operator and logic inside containers. It can be run in the CI and it can help to discover regressions when some changes are applied to the operator.
+These tests verify the basic behavior of the operator and logic inside containers. It can be run in CI and it can help discover regressions when some changes are applied to the operator.
+
+The source code of tests described in this Section can be found under \textit{postgresql-operator/test/e2e/} directory inside \textit{postgresql-operator.zip} archive, which is included in the electronic appendices \ref{chap:appendices}.
 
 \section{Manual failover testing}
-The goal of manual failover testing is to simulate the crash of master node and check if the failover works correctly. First requirement for proper testing is to prepare an environment, which will be as close to the real production cloud environment as possible, Test verifies that the master node misbehavior is detected, the slave with the highest priority is selected for promotion and the downtime is reasonably short.
+The goal of manual failover testing is to simulate the crash of master node and check if the failover works correctly. The first requirement for proper testing is to prepare an environment, which is as close to the real production cloud environment as possible, The test verifies that the master node misbehavior is detected, the slave with the highest priority is selected for promotion, and the downtime is reasonably short.
 
 The test environment is built inside Minishift cluster and consists of following components:
 \begin{itemize}
-  \item PostgresSQL cluster - a PostgreSQL cluster managed by the operator 
-  \item Pgpool-II deployment - Pgpool-II proxy containers
-  \item Test server - two replicas of a simple web based application
+  \item PostgresSQL cluster - a PostgreSQL cluster managed by the operator;
+  \item Pgpool-II deployment - Pgpool-II proxy containers;
+  \item Test servers - two replicas of a simple web based application;
 \end{itemize}
 
 A test user and database are created on the PostgreSQL nodes. The test database contains single table, which stores the timestamps. Pgpool-II deployment is configured to redirect read-only queries to the read-only PostgreSQL service and write queries to the primary service.
 
-Test server is a simple application providing two routes, the first one serves to write current timestamp to the database and the second one reads and returns the last stored timestamp. Two replicas of the test server are deployed to the same Minishift cluster and test database credentials are injected into them. Test servers are connected to Pgpool-II service not to the PostgreSQL nodes directly. Forwarding of the local ports to the test server pods is set up. The two local scripts are periodically sending requests to both routes and logging the responses. One script is called \textit{writer}, it is calling route to store current timestamp every second in an infinite loop. The second one, called \textit{reader} works similarly, but it just retrieves and log the last stored timestamp.
+The test server is a simple application providing two routes: the first one serves to write current timestamp to the database, and the second one reads and returns the last stored timestamp. Two replicas of the test server are deployed to the same Minishift cluster and test database credentials are injected into them. The test servers are connected to Pgpool-II service not to the PostgreSQL nodes directly. Forwarding of the local ports to the test server pods is set up. The two local scripts periodically send requests to both routes and log the responses. One script is called \textit{writer}, it calls route to store current timestamp every second in an infinite loop. The second one, called \textit{reader}, works similarly, but it just retrieves and log the last stored timestamp.
 
 The full failover test scenario is following:
 \begin{enumerate}
@@ -689,9 +690,9 @@ The full failover test scenario is following:
   \item The downtime is measured based on the reader and writer logs.
 \end{enumerate}
 
-When the master node stops responding, slaves try to reconnect multiple times before the failover is triggered. Repmgrd (see Section \ref{sec:repmgr}), allows to configure number of attempts to reconnect and the delay between attempts. The longer reconnect interval means that master node will be unavailable for longer time before the failover is triggered. In the other hand in case the interval is too short the minor network issue or restart of the master node can trigger the failover even when it is not really necessary.
+When the master node stops responding, slaves try to reconnect multiple times before the failover is triggered. Repmgrd (see Section \ref{sec:repmgr}), allows configuring the number of attempts to reconnect via \textit{reconnect\_attempts} parameter and the delay between attempts using the \textit{reconnect\_interval} parameter. The longer reconnect interval means that master node will be unavailable for longer time before the failover is triggered. On the other hand in case the interval is too short the minor network issue or restart of the master node can trigger the failover even when it is not really necessary. The total downtime during failover test is a sum of the reconnect interval multiplied by number of attempts, selection of the new primary node, promotion of selected slave to a new primary and update of the primary service.
 
-The test scenario was repeated multiple times with different cluster size and reconnect interval settings. The test results are summarized in Table \ref{table:failover_testing}.
+The test scenario was repeated multiple times with different cluster sizes and reconnect interval settings. The test results are summarized in Table \ref{table:failover_testing}.
 
 \begin{table}[ht!]
 \centering
@@ -699,34 +700,39 @@ The test scenario was repeated multiple times with different cluster size and re
  \hline
  cluster size & reconnect interval & write downtime & read downtime \\ [0.5ex]
  \hline
- 2 & 6 x 10s & 66s & 4s \\
- 3 & 6 x 10s & 71s & 5s \\
- 2 & 4 x 10s & 48s & 0s \\
- 3 & 4 x 10s & 52s & 0s \\
- 2 & 4 x 7s  & 40s & 0s  \\ 
- 3 & 4 x 7s  & 43s & 4s  \\ [1ex]
+ 2 & 6 x 10 s & 66 s & 4 s \\
+ 3 & 6 x 10 s & 71 s & 5 s \\
+ 2 & 4 x 10 s & 48 s & 0 s \\
+ 3 & 4 x 10 s & 52 s & 0 s \\
+ 2 & 4 x 7 s  & 40 s & 0 s  \\ 
+ 3 & 4 x 7 s  & 43 s & 4 s  \\ [1ex]
  \hline
 \end{tabular}
 \caption{Service downtime during failover}
 \label{table:failover_testing}
 \end{table}
 
-The results of failover testing proof high availability of the cluster. It is able to failover autonomously in case of serious crashes or disk corruption on the master node. The downtime of read queries is negligible and the write downtime is under one minute if the correct settings are used. The number of slave nodes in the cluster has minimal impact on the downtime duration.
+The results of failover testing proof high availability of the cluster. It is able to failover autonomously in case of serious crash or disk corruption on the master node.
+
+The read queries are redirected to read-only service, which load balances requests to all the nodes including master. When the query is redirected to the master node during its unavailability, it fails after some connection timeout.
+The read timeout of a few seconds, which appeared several times is caused by the database connection timeout and one second delay between the attempts. The write downtime is under one minute if the correct settings are used. The number of slave nodes in the cluster has minimal impact on the downtime duration.
+
+An issue related to repmgrd behavior was discovered when testing the cluster of three nodes. When the master node crashes, failover is triggered and one of the slaves becomes the new master. The other slave is attached to the new master node and PostgreSQL server is restarted. After the restart, slave is registered to Repmgr cluster, data are correctly replicated from the new master, but the repmgrd daemon attempts to connect to the old master node, which is unavailable. Switching the upstream node of all slaves properly after the failover should be the responsibility of Repmgr. This issue was reported to the Repmgr project on GitHub \cite{repmgrd_issue}. 
 
 \chapter{Conclusion} \label{chap:conclusion}
-The main objective of this thesis was to design and implement PostgreSQL cluster that provides high availability and runs in the cloud environment with minimal effort required from the administrator.
+The main objective of this thesis was to design and implement a PostgreSQL cluster that provides high availability and runs in the cloud environment with minimal effort required from the administrator.
 
 Many existing alternatives for PostgreSQL replication were compared and analysed. It was necessary to identify tools, which satisfy requirements of the cloud environment like easy setup, scaling and ability to survive restarts.
 
-The solution consists of the containerized PostgreSQL nodes with Repmgr extension backed by persistent storage, Pgpool-II containers serving as a proxy and the PostgreSQL operator. The high availability is achieved by streaming replication and automatic failover, which is triggered if master node crashes. the PostgreSQL operator is designed to initialize, manage and monitor the replicated cluster. It exposes an API, which allows to define a replicated cluster of desired size using a single Kubernetes manifest.
+The solution consists of the containerized PostgreSQL nodes with Repmgr extension backed by a persistent storage, Pgpool-II containers serving as a proxy and the PostgreSQL operator. The high availability is achieved by streaming replication and automatic failover, which is triggered if a master node crashes. The PostgreSQL operator is designed to initialize, manage and monitor the replicated cluster. It exposes an API, which allows defining a replicated cluster of the desired size using a single Kubernetes manifest.
 
 The ability of autonomous cluster setup, scaling and failover was proved by the tests simulating crashes in the Openshift environment. The downtime during failover can be reduced to less than one minute.
 
-The cluster API is highly extensible. If it turns out that some of the PostgreSQL or Repmgr settings needs to be often adjusted by cluster users, it can be added as a new field to the manifest and propagated to containers by the operator.
+The cluster API is highly extensible. If it turns out that some of the PostgreSQL or Repmgr settings need to be often adjusted by cluster users, it can be added as a new field to the manifest and propagated to containers by the operator.
 
-Major PostgreSQL version upgrade can be problematic, especially in the systems based on physical replication. Major upgrade is not covered by the operator, however it makes the cluster initialization trivial. An empty cluster using the new PostgreSQL version can be initialized alongside the original one and logical replication can be set up to synchronize the data to the new master node. Full support for similar scenario can be potentially also integrated into the operator.
+Major PostgreSQL version upgrade can be problematic, especially in the systems based on physical replication. The major upgrade is not covered by the operator, however, it makes the cluster initialization trivial. An empty cluster using the new PostgreSQL version can be initialized alongside the original one and logical replication can be set up to synchronize the data to the new master node. Full support for a similar scenario can be potentially also integrated into the operator.
 
-Running databases inside Kubernetes and Openshift is not easy. However, if the right tools are used and the operator is managing all the resources it can be done efficiently and it can bring benefits to the administrators. Running different kinds of databases in the fully automated cloud environments alongside applications might become the standard solution in the near future.
+Running databases inside Kubernetes and Openshift is not easy. However, if the right tools are used and the operator is managing all the resources, it can be done efficiently and bring benefits to the administrators. Running different kinds of databases in the fully automated cloud environments alongside applications might become the standard solution in the near future.
 
 
 \appendix %% Start the appendices.
