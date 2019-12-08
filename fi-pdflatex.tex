@@ -19,9 +19,9 @@
            %% at your faculty.
   table,   %% This option causes the coloring of tables. Replace
            %% with `notable` to restore plain LaTeX tables.
-  lof,     %% This option prints the List of Figures. Replace with
+  nolof,   %% This option prints the List of Figures. Replace with
            %% `nolof` to hide the List of Figures.
-  lot,     %% This option prints the List of Tables. Replace with
+  nolot,   %% This option prints the List of Tables. Replace with
            %% `nolot` to hide the List of Tables.
   %% More options are listed in the user guide at
   %% <http://mirrors.ctan.org/macros/latex/contrib/fithesis/guide/mu/fi.pdf>.
@@ -294,9 +294,9 @@ spec:
 This manifest defines the deployment of three desired replicas of Nginx \cite{nginx} container, which expose port 80. The deployment and all the replicas are labelled for better organization of objects in the cluster.
 
 \section{OpenShift} \label{sec:openshift}
-OpenShift \cite{rhccos} is a Kubernetes container platform product having a paid support. Openshift uses Kubernetes as a base and builds additional layers of policies, container image streams and supporting software components on top of it. OpenShift brings stricter security policies, integrated CI/CD and web console for cluster management. From version OpenShift 4 there is also an integrated OperatorHub \cite{operatorhub}, storing community operators. These operators become one of the common ways to deploy services on OpenShift and Kubernetes.
+OpenShift \cite{rhccos} is a Kubernetes container platform product having a paid support. OpenShift uses Kubernetes as a base and builds additional layers of policies, container image streams and supporting software components on top of it. OpenShift brings stricter security policies, integrated CI/CD and web console for cluster management. From version OpenShift 4 there is also an integrated OperatorHub \cite{operatorhub}, storing community operators. These operators become one of the common ways to deploy services on OpenShift and Kubernetes.
 
-Using OpenShift instead of pure open source Kubernetes project components brings also some limitations. Kubernetes supports many Linux distribution, while Openshift can be easily installed only on distributions like Red Hat Enterprise Linux (RHEL) \cite{rhel}, CentOS \cite{centos} and a couple more Red Hat alternatives.
+Using OpenShift instead of pure open source Kubernetes project components brings also some limitations. Kubernetes supports many Linux distribution, while OpenShift can be easily installed only on distributions like Red Hat Enterprise Linux (RHEL) \cite{rhel}, CentOS \cite{centos} and a couple more Red Hat alternatives.
 
 \section{Minikube} \label{sec:minikube}
 The distributed model is the core feature of Kubernetes, all the resource and important data about the desired cluster state are spread across multiple physical or virtual machines. The setup of fully working distributed Kubernetes cluster requires a lot of resources, configuration and maintenance work.
@@ -498,13 +498,11 @@ Both RHEL and CentOS are the long term support distributions, they guarantee the
 
 A Fedora based image from PostgreSQL container images project is available with complete installation of PostgreSQL version 10 and it is running in OpenShift very well. The only missing piece of software is the Repmgr extension.
 
-Repmgr was not available in the standard RPM \cite{rpm} format, supported by Fedora distribution. It was necessary to build, test and create a new Fedora package for Repmgr \cite{fedora_repmgr} as one of the first steps of implementing high availability for PostgreSQL in OpenShift. The guidelines for making new RPM packages \cite{fedora_new_package} were followed.
+Repmgr in the standard RPM \cite{rpm} format was not available in Fedora repositories \cite{fedora_repositories}. It was necessary to build, test and create a new Fedora package for Repmgr \cite{fedora_repmgr} as one of the first steps of implementing high availability for PostgreSQL in OpenShift. The Repmgr RPM package follows the Fedora guidelines for making new RPM packages \cite{fedora_new_package}. The \textit{repmgr-rpm.zip} archive in electronic appendices \ref{chap:appendices} contains the RPM package source codes.
 
-After the package was approved and added to Fedora repositories \cite{fedora_repositories} it was necessary to add this package to existing PostgreSQL 10 container image based on Fedora \cite{pg_img}.
+PostgreSQL container image provides a mechanism for image extending \cite{pg_cnt_extending}. Custom initialization and configuration scripts, enabling the Repmgr extension are implemented as an extension of the image (see \textit{postgresql-container-repmgr.zip} in appendices). The new Repmgr package is installed to existing PostgreSQL 10 container image from Fedora repository.
 
-PostgreSQL container image also provides a mechanism for image extending \cite{pg_cnt_extending}. Custom initialization and configuration scripts, enabling the Repmgr extension can be added to the image using this feature.
-
-Pgpool-II was available as an RPM package for Fedora. It was enough to add this package to the Fedora base image for OpenShift, add a couple of configuration and initialization scripts and build the images.
+Pgpool-II was available as an RPM package for Fedora. The Fedora base image for OpenShift with Pgpool-II package and  a couple of initialization scripts is sufficient to be used as a proxy container image. Pgpool-II container image source files can be found inside \textit{pgpool-fedora-container.zip}, which is also included in the electronic appendices \ref{chap:appendices}.
 
 \section{PostgreSQL Operator}
 PostgreSQL operator is the core part of highly available cluster implementation. It controls the state of the PostgreSQL pods and contains the logic keeping the cluster healthy and up to date with the latest desired state.
@@ -654,7 +652,7 @@ Continuous integration (CI) and delivery is a very common practice in the Cloud 
 The highly available PostgreSQL cluster was tested in two phases. The result of the first phase is a set of fully automated tests of the cluster, designed to run in CI. Testing of the full setup, including all the components from the database system nodes to the client application with different settings applied was done manually as a separate step. Following sections explain both phases in more details and summarize the test results.
 
 \section{Automated end-to-end testing}
-The OpenShift environment is quite specific, the proper end-to-end test can be done only inside the real OpenShift cluster. The Operator framework (see Section \ref{sec:operator_framework}) provides an end-to-end test framework to ensure the operator works as intended in real-world scenarios. Each test defines a test cluster, which is created in a temporary Openshift namespace. The cluster can be modified and multiple assertions of Kubernetes objects and their state can be performed. All the objects and the namespace are deleted after the test is finished. Minishift or Minikube (see Section \ref{sec:minikube}) are ideal tools for running similar tests locally or in the CI.
+The OpenShift environment is quite specific, the proper end-to-end test can be done only inside the real OpenShift cluster. The Operator framework (see Section \ref{sec:operator_framework}) provides an end-to-end test framework to ensure the operator works as intended in real-world scenarios. Each test defines a test cluster, which is created in a temporary OpenShift namespace. The cluster can be modified and multiple assertions of Kubernetes objects and their state can be performed. All the objects and the namespace are deleted after the test is finished. Minishift or Minikube (see Section \ref{sec:minikube}) are ideal tools for running similar tests locally or in the CI.
 
 The first automated test focuses on the scaling of the nodes. A small cluster composed of one master and one slave node is initialized. When the initialization is complete and the cluster returns correct status, the slave is removed from cluster specification and the change is applied to the cluster. End-to-end test utilities provide \textit{WaitForDeletion} call. This is used to verify that the slave node was successfully removed from the cluster. The assertion of the cluster status, reporting a single master node follows.  Slave node is upscaled again and the final check ensures that the node was registered as a slave and connected back to the cluster.
 
@@ -728,13 +726,13 @@ Many existing alternatives for PostgreSQL replication were compared and analysed
 
 The solution consists of the containerized PostgreSQL nodes with Repmgr extension backed by a persistent storage, Pgpool-II containers serving as a proxy and the PostgreSQL operator. The high availability is achieved by streaming replication and automatic failover, which is triggered if a master node crashes. The PostgreSQL operator is designed to initialize, manage and monitor the replicated cluster. It exposes an API, which allows defining a replicated cluster of the desired size using a single Kubernetes manifest.
 
-The ability of autonomous cluster setup, scaling and failover was proved by the tests simulating crashes in the Openshift environment. The downtime during failover can be reduced to less than one minute.
+The ability of autonomous cluster setup, scaling and failover was proved by the tests simulating crashes in the OpenShift environment. The downtime during failover can be reduced to less than one minute.
 
 The cluster API is highly extensible. If it turns out that some of the PostgreSQL or Repmgr settings need to be often adjusted by cluster users, it can be added as a new field to the manifest and propagated to containers by the operator.
 
 Major PostgreSQL version upgrade can be problematic, especially in the systems based on physical replication. The major upgrade is not covered by the operator, however, it makes the cluster initialization trivial. An empty cluster using the new PostgreSQL version can be initialized alongside the original one and logical replication can be set up to synchronize the data to the new master node. Full support for a similar scenario can be potentially also integrated into the operator.
 
-Running databases inside Kubernetes and Openshift is not easy. However, if the right tools are used and the operator is managing all the resources, it can be done efficiently and bring benefits to the administrators. Running different kinds of databases in the fully automated cloud environments alongside applications might become the standard solution in the near future.
+Running databases inside Kubernetes and OpenShift is not easy. However, if the right tools are used and the operator is managing all the resources, it can be done efficiently and bring benefits to the administrators. Running different kinds of databases in the fully automated cloud environments alongside applications might become the standard solution in the near future.
 
 
 \appendix %% Start the appendices.
@@ -742,9 +740,9 @@ Running databases inside Kubernetes and Openshift is not easy. However, if the r
 Electronic appendices contain source codes, container image definitions and other software components implemented as part of the highly available PostgreSQL solution for OpenShift:
 \begin{itemize}
   \item postgresql-operator.zip - source code of the PostgreSQL operator
-  \item postgresql-container.zip - Fedora-based PostgreSQL container image, containing Repmgr extension and shell scripts
+  \item postgresql-container-repmgr.zip - Repmgr extension for Fedora-based PostgreSQL container image
   \item pgpool-fedora-container.zip - Fedora-based Pgpool-II container image and corresponding Kubernetes manifests
-  \item repmgr.zip - Repmgr RPM package source files
+  \item repmgr-rpm.zip - Repmgr RPM package source files
 \end{itemize}
 
-\end{document} 
+\end{document}
